@@ -1,4 +1,5 @@
 import { User, UserRole, Assignment, AssignmentStatus, Submission, Resource, ResourceType, DiscussionMessage, Cohort } from './types';
+import { USER_AVATARS, COHORT_IMAGES } from './images';
 
 // App Routes
 export const ROUTES = {
@@ -21,7 +22,7 @@ export const MOCK_FACILITATOR: User = {
   name: 'Dr. Ada Lovelace',
   email: 'ada@semicolon.tech',
   role: UserRole.FACILITATOR,
-  avatarUrl: 'https://picsum.photos/seed/ada/200',
+  avatarUrl: USER_AVATARS.ADA_LOVELACE,
   joinDate: '2022-08-15T10:00:00Z',
   cohorts: ['cohort-java-2024', 'cohort-python-2024'],
 };
@@ -31,16 +32,16 @@ export const MOCK_STUDENT: User = {
   name: 'Charles Babbage',
   email: 'charles@semicolon.tech',
   role: UserRole.STUDENT,
-  avatarUrl: 'https://picsum.photos/seed/charles/200',
+  avatarUrl: USER_AVATARS.CHARLES_BABBAGE,
   joinDate: '2023-01-20T14:30:00Z',
   cohorts: ['cohort-java-2024'],
 };
 
 const MOCK_STUDENTS_LIST = [
     MOCK_STUDENT,
-    { id: 'student-02', name: 'Grace Hopper', avatarUrl: 'https://picsum.photos/seed/grace/200', cohorts: ['cohort-java-2024'] },
-    { id: 'student-03', name: 'Alan Turing', avatarUrl: 'https://picsum.photos/seed/turing/200', cohorts: ['cohort-python-2024'] },
-    { id: 'student-04', name: 'Margaret Hamilton', avatarUrl: 'https://picsum.photos/seed/hamilton/200', cohorts: ['cohort-python-2024'] },
+    { id: 'student-02', name: 'Grace Hopper', avatarUrl: USER_AVATARS.GRACE_HOPPER, cohorts: ['cohort-java-2024'] },
+    { id: 'student-03', name: 'Alan Turing', avatarUrl: USER_AVATARS.ALAN_TURING, cohorts: ['cohort-python-2024'] },
+    { id: 'student-04', name: 'Margaret Hamilton', avatarUrl: USER_AVATARS.MARGARET_HAMILTON, cohorts: ['cohort-python-2024'] },
 ] as Pick<User, 'id' | 'name' | 'avatarUrl'>[];
 
 
@@ -51,7 +52,7 @@ export let MOCK_COHORTS: Cohort[] = [
         description: 'A deep dive into Java programming, from fundamentals to advanced enterprise applications.',
         facilitators: [MOCK_FACILITATOR],
         students: MOCK_STUDENTS_LIST.filter(s => s.id !== 'student-03' && s.id !== 'student-04'),
-        imageUrl: `https://picsum.photos/seed/java/600/400`,
+        imageUrl: COHORT_IMAGES.JAVA,
         tags: ['Java', 'Backend'],
     },
     {
@@ -60,16 +61,16 @@ export let MOCK_COHORTS: Cohort[] = [
         description: 'Master Python for data science, web development, and automation.',
         facilitators: [MOCK_FACILITATOR],
         students: MOCK_STUDENTS_LIST.filter(s => s.id === 'student-03' || s.id === 'student-04'),
-        imageUrl: `https://picsum.photos/seed/python/600/400`,
+        imageUrl: COHORT_IMAGES.PYTHON,
         tags: ['Python', 'Data Science'],
     },
     {
         id: 'cohort-frontend-2024',
         name: 'Cohort 3 - Frontend',
         description: 'Become a master of the modern frontend with React, Tailwind, and TypeScript.',
-        facilitators: [{ id: 'fac-02', name: 'Tim Berners-Lee', avatarUrl: 'https://picsum.photos/seed/tim/200' }],
+        facilitators: [{ id: 'fac-02', name: 'Tim Berners-Lee', avatarUrl: USER_AVATARS.TIM_BERNERS_LEE }],
         students: [],
-        imageUrl: `https://picsum.photos/seed/frontend/600/400`,
+        imageUrl: COHORT_IMAGES.FRONTEND,
         tags: ['React', 'Frontend'],
     }
 ];
@@ -127,7 +128,7 @@ export let MOCK_ASSIGNMENTS: Assignment[] = [
 export let MOCK_SUBMISSIONS: Submission[] = [
     {
         id: 'sub-01',
-        student: { id: 'student-02', name: 'Grace Hopper', avatarUrl: 'https://picsum.photos/seed/grace/200' },
+        student: { id: 'student-02', name: 'Grace Hopper', avatarUrl: USER_AVATARS.GRACE_HOPPER },
         submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
         grade: 95,
         feedback: 'Excellent work! The UI is clean and the code is well-structured.',

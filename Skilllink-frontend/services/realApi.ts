@@ -1,4 +1,5 @@
 import { User, UserRole, Assignment, Submission, Resource, DiscussionMessage, Cohort, AssignmentStatus, ResourceType } from '../types';
+import { getUserAvatar, getCohortImage } from '../images';
 
 // Get API base URL from environment variables
 const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -45,7 +46,7 @@ export const realApi = {
       name: data.name,
       email: data.email,
       role: data.role,
-      avatarUrl: data.avatar || `https://ui-avatars.com/api/?name=${data.name}&background=random`,
+      avatarUrl: data.avatar || getUserAvatar(data._id, data.name),
       joinDate: new Date().toISOString(),
       cohorts: [], // Will be populated when getting cohorts
     };
@@ -70,7 +71,7 @@ export const realApi = {
       name: data.name,
       email: data.email,
       role: data.role,
-      avatarUrl: data.avatar || `https://ui-avatars.com/api/?name=${data.name}&background=random`,
+      avatarUrl: data.avatar || getUserAvatar(data._id, data.name),
       joinDate: new Date().toISOString(),
       cohorts: [],
     };
@@ -95,14 +96,14 @@ export const realApi = {
       facilitators: cohort.facilitators.map((fac: any) => ({
         id: fac._id,
         name: fac.name,
-        avatarUrl: fac.avatar || `https://ui-avatars.com/api/?name=${fac.name}&background=random`,
+        avatarUrl: fac.avatar || getUserAvatar(fac._id, fac.name),
       })),
       students: cohort.students.map((student: any) => ({
         id: student._id,
         name: student.name,
-        avatarUrl: student.avatar || `https://ui-avatars.com/api/?name=${student.name}&background=random`,
+        avatarUrl: student.avatar || getUserAvatar(student._id, student.name),
       })),
-      imageUrl: `https://picsum.photos/seed/${cohort._id}/600/400`,
+      imageUrl: getCohortImage(cohort._id),
       tags: [cohort.programmingLanguage],
     }));
   },
@@ -123,14 +124,14 @@ export const realApi = {
       facilitators: data.facilitators.map((fac: any) => ({
         id: fac._id,
         name: fac.name,
-        avatarUrl: fac.avatar || `https://ui-avatars.com/api/?name=${fac.name}&background=random`,
+        avatarUrl: fac.avatar || getUserAvatar(fac._id, fac.name),
       })),
       students: data.students.map((student: any) => ({
         id: student._id,
         name: student.name,
-        avatarUrl: student.avatar || `https://ui-avatars.com/api/?name=${student.name}&background=random`,
+        avatarUrl: student.avatar || getUserAvatar(student._id, student.name),
       })),
-      imageUrl: `https://picsum.photos/seed/${data._id}/600/400`,
+      imageUrl: getCohortImage(data._id),
       tags: [data.programmingLanguage],
     };
   },
@@ -154,7 +155,8 @@ export const realApi = {
       facilitator: {
         id: assignment.createdBy._id,
         name: assignment.createdBy.name,
-        avatarUrl: assignment.createdBy.avatar || `https://ui-avatars.com/api/?name=${assignment.createdBy.name}&background=random`,
+        avatarUrl: assignment.createdBy.avatar || getUserAvatar(assignment.createdBy._id, assignment.createdBy.name),
+        
       },
       resources: [], // Will be populated when getting resources
       cohortId: assignment.cohort || '',
@@ -179,7 +181,8 @@ export const realApi = {
       facilitator: {
         id: assignment.createdBy._id,
         name: assignment.createdBy.name,
-        avatarUrl: assignment.createdBy.avatar || `https://ui-avatars.com/api/?name=${assignment.createdBy.name}&background=random`,
+        avatarUrl: assignment.createdBy.avatar || getUserAvatar(assignment.createdBy._id, assignment.createdBy.name),
+        
       },
       resources: [], // Will be populated when getting resources
       cohortId: cohortId,
@@ -204,7 +207,8 @@ export const realApi = {
       facilitator: {
         id: data.createdBy._id,
         name: data.createdBy.name,
-        avatarUrl: data.createdBy.avatar || `https://ui-avatars.com/api/?name=${data.createdBy.name}&background=random`,
+        avatarUrl: data.createdBy.avatar || getUserAvatar(data.createdBy._id, data.createdBy.name),
+        
       },
       resources: [], // Will be populated when getting resources
       cohortId: data.cohort || '',
@@ -235,7 +239,8 @@ export const realApi = {
       facilitator: {
         id: assignmentData.createdBy._id,
         name: assignmentData.createdBy.name,
-        avatarUrl: assignmentData.createdBy.avatar || `https://ui-avatars.com/api/?name=${assignmentData.createdBy.name}&background=random`,
+        avatarUrl: assignmentData.createdBy.avatar || getUserAvatar(assignmentData.createdBy._id, assignmentData.createdBy.name),
+        
       },
       resources: [],
       cohortId: assignmentData.cohort || '',
@@ -261,7 +266,7 @@ export const realApi = {
       student: {
         id: submission.studentId._id,
         name: submission.studentId.name,
-        avatarUrl: submission.studentId.avatar || `https://ui-avatars.com/api/?name=${submission.studentId.name}&background=random`,
+        avatarUrl: submission.studentId.avatar || getUserAvatar(submission.studentId._id, submission.studentId.name),
       },
       submittedAt: submission.submittedAt,
       grade: submission.grade,
@@ -390,7 +395,8 @@ export const realApi = {
       user: {
         id: message.userId._id,
         name: message.userId.name,
-        avatarUrl: message.userId.avatar || `https://ui-avatars.com/api/?name=${message.userId.name}&background=random`,
+        avatarUrl: message.userId.avatar || getUserAvatar(message.userId._id, message.userId.name),
+        
       },
       content: message.message,
       timestamp: message.createdAt,
@@ -414,7 +420,8 @@ export const realApi = {
       user: {
         id: data.userId._id,
         name: data.userId.name,
-        avatarUrl: data.userId.avatar || `https://ui-avatars.com/api/?name=${data.userId.name}&background=random`,
+        avatarUrl: data.userId.avatar || getUserAvatar(data.userId._id, data.userId.name),
+        
       },
       content: data.message,
       timestamp: data.createdAt,

@@ -5,18 +5,12 @@ import LogoIcon from '../components/icons/LogoIcon';
 import { ROUTES } from '../constants';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import ArrowRightIcon from '../components/icons/ArrowRightIcon';
-import PartnerCartesiIcon from '../components/icons/PartnerCartesiIcon';
-import PartnerOptimismIcon from '../components/icons/PartnerOptimismIcon';
-import PartnerLiskIcon from '../components/icons/PartnerLiskIcon';
-import PartnerAyaIcon from '../components/icons/PartnerAyaIcon';
-import PartnerWeb3LadiesIcon from '../components/icons/PartnerWeb3LadiesIcon';
-import PartnerQIcon from '../components/icons/PartnerQIcon';
-import PartnerBlockfuseIcon from '../components/icons/PartnerBlockfuseIcon';
-import PartnerBaseIcon from '../components/icons/PartnerBaseIcon';
+import PartnerLogo from '../components/PartnerLogo';
+import FeatureIllustration from '../components/FeatureIllustration';
 import IllustrationStudentDesk from '../components/illustrations/IllustrationStudentDesk';
 import IllustrationCollaboration from '../components/illustrations/IllustrationCollaboration';
 import IllustrationVideoCall from '../components/illustrations/IllustrationVideoCall';
-
+import { USER_AVATARS } from '../images';
 
 const AnimatedSection: React.FC<{ children: React.ReactNode; className?: string, id?: string, style?: React.CSSProperties }> = ({ children, className, id, style }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -26,22 +20,22 @@ const AnimatedSection: React.FC<{ children: React.ReactNode; className?: string,
 
 const PartnerLogos = () => (
   <>
-    <PartnerCartesiIcon className="h-7 md:h-8 text-neutral-gray-light transition-transform duration-300 hover:scale-110" />
-    <PartnerOptimismIcon className="h-7 md:h-8 text-neutral-gray-light transition-transform duration-300 hover:scale-110" />
-    <PartnerLiskIcon className="h-7 md:h-8 text-neutral-gray-light transition-transform duration-300 hover:scale-110" />
-    <PartnerAyaIcon className="h-7 md:h-8 text-neutral-gray-light transition-transform duration-300 hover:scale-110" />
-    <PartnerWeb3LadiesIcon className="h-7 md:h-8 text-neutral-gray-light transition-transform duration-300 hover:scale-110" />
-    <PartnerQIcon className="h-7 md:h-8 text-neutral-gray-light transition-transform duration-300 hover:scale-110" />
-    <PartnerBlockfuseIcon className="h-7 md:h-8 text-neutral-gray-light transition-transform duration-300 hover:scale-110" />
-    <PartnerBaseIcon className="h-7 md:h-8 text-neutral-gray-light transition-transform duration-300 hover:scale-110" />
+    <PartnerLogo name="cartesi" />
+    <PartnerLogo name="optimism" />
+    <PartnerLogo name="lisk" />
+    <PartnerLogo name="aya" />
+    <PartnerLogo name="web3ladies" />
+    <PartnerLogo name="q" />
+    <PartnerLogo name="blockfuse" />
+    <PartnerLogo name="base" />
   </>
 );
 
 const LandingPage: React.FC = () => {
     const features = [
-      { illustration: <IllustrationStudentDesk className="h-48 mx-auto mb-4" />, title: "Seamless Assignments", description: "Facilitators post assignments and resources with ease. Students view, submit, and track their progress." },
-      { illustration: <IllustrationCollaboration className="h-48 mx-auto mb-4" />, title: "Real-time Discussions", description: "Engage in threaded discussions on every assignment, fostering collaboration and instant feedback." },
-      { illustration: <IllustrationVideoCall className="h-48 mx-auto mb-4" />, title: "Role-Based Dashboards", description: "Custom-tailored interfaces for students and facilitators provide the right tools at the right time." }
+      { illustration: <FeatureIllustration name="student-desk" />, title: "Seamless Assignments", description: "Facilitators post assignments and resources with ease. Students view, submit, and track their progress." },
+      { illustration: <FeatureIllustration name="collaboration" />, title: "Real-time Discussions", description: "Engage in threaded discussions on every assignment, fostering collaboration and instant feedback." },
+      { illustration: <FeatureIllustration name="video-call" />, title: "Role-Based Dashboards", description: "Custom-tailored interfaces for students and facilitators provide the right tools at the right time." }
     ];
 
   return (
@@ -68,7 +62,7 @@ const LandingPage: React.FC = () => {
             {/* Arc 1 (Outer) */}
             <div className="absolute border-2 border-dashed border-primary/10 rounded-full animate-spin-slow" style={{ width: '700px', height: '700px', animationDuration: '60s' }}>
               <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 group">
-                <img src="https://picsum.photos/seed/person1/100" alt="Community member" className="w-20 h-20 rounded-full shadow-lg border-2 border-primary animate-spin-reverse-slow object-cover" style={{ animationDuration: '60s' }}/>
+                <img src={USER_AVATARS.COMMUNITY_MEMBER_1} alt="Community member" className="w-20 h-20 rounded-full shadow-lg border-2 border-primary animate-spin-reverse-slow object-cover" style={{ animationDuration: '60s' }}/>
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-neutral-soft-black rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Facilitator</span>
               </div>
             </div>
@@ -76,7 +70,7 @@ const LandingPage: React.FC = () => {
             {/* Arc 2 (Middle) */}
             <div className="absolute border-2 border-dashed border-primary/10 rounded-full animate-spin-slow" style={{ width: '500px', height: '500px', animationDirection: 'reverse', animationDuration: '50s' }}>
                <div className="absolute top-[15%] right-0 -translate-y-1/2 translate-x-1/2 group">
-                  <img src="https://picsum.photos/seed/person2/100" alt="Community member" className="w-16 h-16 rounded-full shadow-lg border-2 border-primary animate-spin-reverse-slow object-cover" style={{ animationDirection: 'reverse', animationDuration: '50s' }}/>
+                  <img src={USER_AVATARS.COMMUNITY_MEMBER_2} alt="Community member" className="w-16 h-16 rounded-full shadow-lg border-2 border-primary animate-spin-reverse-slow object-cover" style={{ animationDirection: 'reverse', animationDuration: '50s' }}/>
                   <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-neutral-soft-black rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Student</span>
                </div>
             </div>
@@ -84,7 +78,7 @@ const LandingPage: React.FC = () => {
             {/* Arc 3 (Inner) */}
             <div className="absolute border-2 border-dashed border-primary/10 rounded-full animate-spin-slow" style={{ width: '300px', height: '300px', animationDuration: '40s' }}>
                <div className="absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-1/2 group">
-                  <img src="https://picsum.photos/seed/person3/100" alt="Community member" className="w-14 h-14 rounded-full shadow-lg border-2 border-primary animate-spin-reverse-slow object-cover" style={{ animationDuration: '40s' }}/>
+                  <img src={USER_AVATARS.COMMUNITY_MEMBER_3} alt="Community member" className="w-14 h-14 rounded-full shadow-lg border-2 border-primary animate-spin-reverse-slow object-cover" style={{ animationDuration: '40s' }}/>
                   <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max px-2 py-1 text-xs text-white bg-neutral-soft-black rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Student</span>
                </div>
             </div>
