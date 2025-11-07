@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SkillLink by Semicolon</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              heading: ['Satoshi', 'sans-serif'],
+            },
+            colors: {
+              primary: {
+                DEFAULT: '#FF0000',
+                dark: '#E60000',
+              },
+              secondary: '#FFFFFF',
+              neutral: {
+                'light-gray': '#F4F4F4',
+                'soft-black': '#0A0A0A',
+                'gray-dark': '#1A1A1A',
+                'gray-medium': '#2D2D2D',
+                'gray-light': '#8F8F8F'
+              },
+            },
+            borderRadius: {
+              '2xl': '1rem',
+            },
+            backgroundImage: {
+              'radial-stain-light': 'radial-gradient(circle at 50% 50%, rgba(255,0,0,0.05) 0%, transparent 60%)',
+              'radial-stain-dark': 'radial-gradient(circle at 50% 50%, rgba(255,0,0,0.1) 0%, transparent 60%)',
+            },
+            animation: {
+              'gradient-bg': 'gradient-bg 5s ease infinite',
+              'fade-in': 'fade-in 0.5s ease-out forwards',
+              'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
+              'slide-up': 'slide-up 0.6s ease-out forwards',
+              'fade-in-zoom': 'fade-in-zoom 0.6s ease-out forwards',
+              'pulse-on-load': 'pulse-on-load 1.5s ease-in-out forwards',
+              'spin-slow': 'spin 50s linear infinite',
+              'spin-reverse-slow': 'spin-reverse 50s linear infinite',
+              'marquee-scroll': 'marquee-scroll 40s linear infinite',
+            },
+            keyframes: {
+              'gradient-bg': {
+                '0%, 100%': { backgroundPosition: '0% 50%' },
+                '50%': { backgroundPosition: '100% 50%' },
+              },
+              'fade-in': {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              'fade-in-up': {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+               'slide-up': {
+                '0%': { transform: 'translateY(20px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              'fade-in-zoom': {
+                '0%': { opacity: '0', transform: 'scale(0.95)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
+              },
+              'pulse-on-load': {
+                 '0%, 100%': { transform: 'scale(1)' },
+                 '50%': { transform: 'scale(1.05)' },
+              },
+              'spin-reverse': {
+                'to': { transform: 'rotate(-360deg)' },
+              },
+              'marquee-scroll': {
+                'from': { transform: 'translateX(0)' },
+                'to': { transform: 'translateX(-100%)' },
+              },
+            }
+          },
+        },
+        plugins: [],
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-secondary dark:bg-neutral-soft-black font-sans antialiased">
+    <div id="root"></div>
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999]"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

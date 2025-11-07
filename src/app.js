@@ -1,0 +1,53 @@
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+
+// Load environment variables
+dotenv.config();
+
+// Import configuration
+const config = require('./config/config');
+
+// Import database connection
+const connectDB = require('./config/db');
+
+// Import middleware
+const rateLimiter = require('./middleware/rateLimiter');
+
+// Import routes
+const authRoutes = require('./routes/authRoutes');
+const assignmentRoutes = require('./routes/assignmentRoutes');
+const submissionRoutes = require('./routes/submissionRoutes');
+const resourceRoutes = require('./routes/resourceRoutes');
+const discussionRoutes = require('./routes/discussionRoutes');
+const cohortRoutes = require('./routes/cohortRoutes');
+
+// Connect to database
+connectDB();
+
+const app = express();
+
+// Apply rate limiting
+app.use(rateLimiter);
+
+// Middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000'
+}));
+app.use(express.json({ 
+  extended: false,
+  limit: process.env.FILE_SIZE_LIMIT || '10mb'
+}));
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/submissions', submissionRoutes);
+app.use('/api/resources', resourceRoutes);
+app.use('/api/discussions', discussionRoutes);
+app.use('/api/cohorts', cohortRoutes);
+
+// Error handling middleware
+app.use(require('./middleware/errorHandler'));
+
+module.exports = app;
