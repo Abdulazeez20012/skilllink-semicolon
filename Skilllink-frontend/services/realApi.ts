@@ -1,7 +1,7 @@
 import { User, UserRole, Assignment, Submission, Resource, DiscussionMessage, Cohort, AssignmentStatus, ResourceType } from '../types';
 
 // Get API base URL from environment variables
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = (token: string) => ({
@@ -432,8 +432,46 @@ export const realApi = {
 
   // User profile
   updateUserProfile: async (user: User, updates: Partial<Pick<User, 'name' | 'email' | 'avatarUrl'>>, token: string): Promise<User> => {
-    // In a real implementation, this would make an API call to update the user
-    // For now, we'll just return the updated user
-    return { ...user, ...updates };
+    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: updates.name,
+        email: updates.email,
+        avatar: updates.avatarUrl,
+      }),
+    });
+
+    const data = await handleResponse(response);
+    
+    // Transform backend user data to frontend user data structure
+    return {
+      id: data._id,
+      name: data.name,
+      email: data.email,
+      role: user.role, // Role doesn't change
+      avatarUrl: data.avatar || `https://ui-avatars.com/api/?name=${data.name}&background=random`,
+      joinDate: user.joinDate, // Keep original join date
+      cohorts: user.cohorts, // Keep original cohorts
+    };
+  },
+
+  uploadAvatar: async (file: File, token: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await fetch(`${API_BASE_URL}/auth/avatar`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await handleResponse(response);
+    return data.avatarUrl;
   },
 };

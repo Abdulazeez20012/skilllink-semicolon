@@ -1,13 +1,12 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
-import { api, LoginCredentials } from '../services/api';
-import { realApi } from '../services/realApi';
+import { realApi, LoginCredentials } from '../services/realApi';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: LoginCredentials, role: UserRole) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
   updateUser: (updates: Partial<Pick<User, 'name' | 'email' | 'avatarUrl'>>) => Promise<void>;
 }
@@ -18,7 +17,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Use real API if not in development mode with mock data flag
 const USE_MOCK_DATA = false; // Default to real API
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -42,13 +40,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkLoggedIn();
   }, []);
 
-  const login = async (credentials: LoginCredentials, role: UserRole) => {
+  const login = async (credentials: LoginCredentials) => {
     setLoading(true);
     try {
       let loggedInUser: User;
+      let token: string;
       
       if (USE_MOCK_DATA) {
-        loggedInUser = await api.login(credentials, role);
+        // For mock data, we would need to determine the role from somewhere
+        // This is a simplification - in a real app you might need to adjust this
+        const result = await realApi.login(credentials);
+        loggedInUser = result.user;
+        token = result.token;
       } else {
         // Use real API
         const realCredentials = {
@@ -57,8 +60,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
         const result = await realApi.login(realCredentials);
         loggedInUser = result.user;
+        token = result.token;
         // Store token for real API usage
-        localStorage.setItem('skilllink_token', result.token);
+        localStorage.setItem('skilllink_token', token);
       }
       
       setUser(loggedInUser);
@@ -84,13 +88,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       let updatedUser: User;
+      const token = localStorage.getItem('skilllink_token');
       
-      if (USE_MOCK_DATA) {
-        updatedUser = await api.updateUserProfile(user, updates);
-      } else {
-        // For real API, we would need to pass the token
-        // For now, we'll just update the local user
+      if (USE_MOCK_DATA || !token) {
+        // Fallback to local update if no token or using mock data
         updatedUser = { ...user, ...updates };
+      } else {
+        // Use real API to update user profile
+        updatedUser = await realApi.updateUserProfile(user, updates, token);
       }
       
       setUser(updatedUser);

@@ -27,7 +27,7 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await login({ email, password }, role);
+      await login({ email, password });
       // The navigation is handled inside the auth context
     } catch (error) {
       showToast('Login failed. Please check your credentials.', 'error');

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { realApi } from '../services/realApi';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -20,11 +21,39 @@ const ProfilePage: React.FC = () => {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+      
+      // Upload avatar file
+      handleAvatarUpload(file);
+    }
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      const token = localStorage.getItem('skilllink_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // Upload the file to get a URL
+      const avatarUrl = await realApi.uploadAvatar(file, token);
+      
+      // Update user with new avatar URL
+      await updateUser({
+        avatarUrl,
+      });
+      
+      showToast('Avatar updated successfully!', 'success');
+    } catch (error) {
+      console.error('Failed to upload avatar:', error);
+      showToast('Failed to upload avatar.', 'error');
+      // Reset preview on error
+      setAvatarPreview(user?.avatarUrl || null);
     }
   };
 
@@ -32,18 +61,13 @@ const ProfilePage: React.FC = () => {
     if (!user) return;
     setIsUpdating(true);
     try {
-      // In a real app, you would upload the file to a storage service
-      // and get a URL back. For this mock, we'll use the base64 preview as the new URL.
-      const newAvatarUrl = avatarPreview || user.avatarUrl;
-      
       await updateUser({
         name,
         email,
-        avatarUrl: newAvatarUrl,
+        // avatarUrl is handled separately during file upload
       });
 
       showToast('Profile updated successfully!', 'success');
-      setAvatarPreview(null); // Reset preview after successful update
     } catch (error) {
       showToast('Failed to update profile.', 'error');
     } finally {
@@ -52,7 +76,7 @@ const ProfilePage: React.FC = () => {
   };
 
   const handlePasswordUpdate = () => {
-     // Mock update
+    // Mock update
     showToast('Password changed successfully!', 'success');
   }
 

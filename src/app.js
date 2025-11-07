@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -38,6 +39,9 @@ app.use(express.json({
   extended: false,
   limit: process.env.FILE_SIZE_LIMIT || '10mb'
 }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Health check endpoint
 app.get('/api', (req, res) => {
