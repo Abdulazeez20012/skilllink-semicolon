@@ -19,7 +19,7 @@ interface AuthProviderProps {
 }
 
 // Use real API if not in development mode with mock data flag
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true';
+const USE_MOCK_DATA = false; // Default to real API
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email: credentials.email,
           password: credentials.password || 'defaultPassword123',
         };
-        const result = await realApi.login(realCredentials, role);
+        const result = await realApi.login(realCredentials);
         loggedInUser = result.user;
         // Store token for real API usage
         localStorage.setItem('skilllink_token', result.token);

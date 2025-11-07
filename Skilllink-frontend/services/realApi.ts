@@ -1,7 +1,7 @@
 import { User, UserRole, Assignment, Submission, Resource, DiscussionMessage, Cohort, AssignmentStatus, ResourceType } from '../types';
 
 // Get API base URL from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = (token: string) => ({
@@ -25,7 +25,7 @@ export interface LoginCredentials {
 
 export const realApi = {
   // Authentication
-  login: async (credentials: LoginCredentials, role: UserRole): Promise<{ user: User; token: string }> => {
+  login: async (credentials: LoginCredentials): Promise<{ user: User; token: string }> => {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
