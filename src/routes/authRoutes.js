@@ -7,6 +7,6 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.put('/profile', protect, updateUserProfile);
-router.post('/avatar', protect, upload.single('avatar'), uploadAvatar);
+router.post('/avatar', protect, upload.avatar.single('avatar'), uploadAvatar);
 
 module.exports = router;

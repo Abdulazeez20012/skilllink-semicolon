@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Assignment, UserRole, AssignmentStatus } from '../types';
-import { api } from '../services/api';
+import { realApi } from '../services/realApi';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -21,7 +21,12 @@ const DashboardPage: React.FC = () => {
     const fetchAssignments = async () => {
       if (!user) return;
       try {
-        const data = await api.getAssignments(user);
+        const token = localStorage.getItem('skilllink_token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+        
+        const data = await realApi.getAssignments(token);
         setAssignments(data);
       } catch (error) {
         console.error('Failed to fetch assignments', error);

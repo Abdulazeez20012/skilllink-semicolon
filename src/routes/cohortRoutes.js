@@ -20,13 +20,19 @@ const router = express.Router();
 // All routes require authentication
 router.use(authMiddleware);
 
-// Admin routes
+// Public routes for viewing cohorts (students and facilitators can view)
 router.route('/')
-  .post(roleMiddleware('admin'), createCohort)
   .get(getCohorts);
 
+// Admin routes
+router.route('/')
+  .post(roleMiddleware('admin'), createCohort);
+
 router.route('/:id')
-  .get(getCohortById)
+  .get(getCohortById);
+
+// Admin routes for modifying cohorts
+router.route('/:id')
   .put(roleMiddleware('admin'), updateCohort)
   .delete(roleMiddleware('admin'), deleteCohort);
 

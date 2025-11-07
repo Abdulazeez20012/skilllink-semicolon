@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const upload = require('../middleware/uploadMiddleware');
+const config = require('../config/config');
 
 // Generate JWT token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '30d'
+  return jwt.sign({ id }, config.jwtSecret, {
+    expiresIn: config.jwtExpire
   });
 };
 

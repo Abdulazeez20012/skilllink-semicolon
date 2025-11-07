@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  register: (userData: { name: string; email: string; password: string; role: UserRole }) => Promise<void>;
   logout: () => void;
   updateUser: (updates: Partial<Pick<User, 'name' | 'email' | 'avatarUrl'>>) => Promise<void>;
 }
@@ -54,11 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         token = result.token;
       } else {
         // Use real API
-        const realCredentials = {
-          email: credentials.email,
-          password: credentials.password || 'defaultPassword123',
-        };
-        const result = await realApi.login(realCredentials);
+        const result = await realApi.login(credentials);
         loggedInUser = result.user;
         token = result.token;
         // Store token for real API usage
@@ -70,6 +67,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       navigate('/app/dashboard', { replace: true });
     } catch (error) {
       console.error('Login failed:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (userData: { name: string; email: string; password: string; role: UserRole }) => {
+    setLoading(true);
+    try {
+      let registeredUser: User;
+      let token: string;
+      
+      if (USE_MOCK_DATA) {
+        // For mock data, we would need to determine the role from somewhere
+        // This is a simplification - in a real app you might need to adjust this
+        const result = await realApi.register(userData);
+        registeredUser = result.user;
+        token = result.token;
+      } else {
+        // Use real API
+        const result = await realApi.register(userData);
+        registeredUser = result.user;
+        token = result.token;
+        // Store token for real API usage
+        localStorage.setItem('skilllink_token', token);
+      }
+      
+      setUser(registeredUser);
+      localStorage.setItem('skilllink-user', JSON.stringify(registeredUser));
+      navigate('/app/dashboard', { replace: true });
+    } catch (error) {
+      console.error('Registration failed:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -107,7 +136,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Assignment, Submission, DiscussionMessage, UserRole } from '../types';
-import { api } from '../services/api';
+import { realApi } from '../services/realApi';
 import { useAuth } from '../hooks/useAuth';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
@@ -55,16 +55,24 @@ const AssignmentDetailPage: React.FC = () => {
     const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(null);
 
     const fetchData = useCallback(async () => {
-        if (!id) return;
+        if (!id || !user) return;
         try {
             setLoading(true);
-            const [assignmentData, submissionsData, messagesData] = await Promise.all([
-                api.getAssignmentById(id),
-                user?.role === UserRole.FACILITATOR ? api.getSubmissionsForAssignment(id) : Promise.resolve([]),
-                api.getDiscussionMessages(id)
-            ]);
-            setAssignment(assignmentData || null);
-            setSubmissions(submissionsData);
+            const token = localStorage.getItem('skilllink_token');
+            if (!token) {
+                showToast('Authentication required.', 'error');
+                return;
+            }
+            
+            const assignmentData = await realApi.getAssignmentById(id, token);
+            setAssignment(assignmentData);
+            
+            if (user?.role === UserRole.FACILITATOR) {
+                const submissionsData = await realApi.getSubmissionsForAssignment(id, token);
+                setSubmissions(submissionsData);
+            }
+            
+            const messagesData = await realApi.getDiscussionMessages(id, token);
             setMessages(messagesData);
         } catch (error) {
             console.error("Failed to fetch assignment details", error);
@@ -80,11 +88,23 @@ const AssignmentDetailPage: React.FC = () => {
 
     const handleMessageSend = async () => {
         if (!newMessage.trim() || !user || !id) return;
-        const sentMessage = { user: { id: user.id, name: user.name, avatarUrl: user.avatarUrl }, content: newMessage };
-        setNewMessage('');
         try {
-            await api.postDiscussionMessage(id, sentMessage);
-            const messagesData = await api.getDiscussionMessages(id);
+            const token = localStorage.getItem('skilllink_token');
+            if (!token) {
+                showToast('Authentication required.', 'error');
+                return;
+            }
+            
+            const sentMessage = { 
+                user: { id: user.id, name: user.name, avatarUrl: user.avatarUrl }, 
+                content: newMessage 
+            };
+            
+            await realApi.postDiscussionMessage(id, sentMessage, token);
+            setNewMessage('');
+            
+            // Refresh messages
+            const messagesData = await realApi.getDiscussionMessages(id, token);
             setMessages(messagesData);
         } catch (error) {
             showToast('Failed to send message.', 'error');
@@ -94,7 +114,13 @@ const AssignmentDetailPage: React.FC = () => {
     const handleMessageDelete = async (messageId: string) => {
         if (window.confirm("Are you sure you want to delete this comment?")) {
             try {
-                await api.deleteDiscussionMessage(messageId);
+                const token = localStorage.getItem('skilllink_token');
+                if (!token) {
+                    showToast('Authentication required.', 'error');
+                    return;
+                }
+                
+                await realApi.deleteDiscussionMessage(id!, messageId, token);
                 setMessages(prev => prev.filter(m => m.id !== messageId));
                 showToast('Comment deleted.', 'success');
             } catch(e) {
@@ -110,7 +136,13 @@ const AssignmentDetailPage: React.FC = () => {
         }
         setIsSubmitting(true);
         try {
-            await api.submitAssignment(id, { projectLink });
+            const token = localStorage.getItem('skilllink_token');
+            if (!token) {
+                showToast('Authentication required.', 'error');
+                return;
+            }
+            
+            await realApi.submitAssignment(id, { projectLink }, token);
             showToast('Assignment submitted successfully!', 'success');
             fetchData();
         } catch (error) {
@@ -126,9 +158,15 @@ const AssignmentDetailPage: React.FC = () => {
     }
     
     const handleSaveGrade = async (grade: number, feedback: string) => {
-        if (!gradingSubmission) return;
+        if (!gradingSubmission || !id) return;
         try {
-            await api.gradeSubmission(gradingSubmission.id, grade, feedback);
+            const token = localStorage.getItem('skilllink_token');
+            if (!token) {
+                showToast('Authentication required.', 'error');
+                return;
+            }
+            
+            await realApi.gradeSubmission(gradingSubmission.id, grade, feedback, token);
             showToast("Grade submitted successfully.", "success");
             fetchData();
         } catch(e) {

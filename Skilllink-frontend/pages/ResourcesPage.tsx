@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Resource, ResourceType, UserRole } from '../types';
-import { api } from '../services/api';
+import { realApi } from '../services/realApi';
 import Card from '../components/ui/Card';
 import Spinner from '../components/ui/Spinner';
 import ExternalLinkIcon from '../components/icons/ExternalLinkIcon';
@@ -69,7 +69,12 @@ const ResourcesPage: React.FC = () => {
   const fetchResources = async () => {
       try {
         setLoading(true);
-        const data = await api.getResources();
+        const token = localStorage.getItem('skilllink_token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+        
+        const data = await realApi.getResources(token);
         setResources(data);
       } catch (error) {
         console.error('Failed to fetch resources', error);
@@ -81,9 +86,16 @@ const ResourcesPage: React.FC = () => {
 
   const handleSave = async (data: any) => {
       try {
-          await api.createResource(data);
-          showToast("Resource added.", "success");
-          fetchResources();
+          const token = localStorage.getItem('skilllink_token');
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
+          
+          // Note: There's no createResource in realApi yet, so we'll just show a message
+          showToast("Create functionality not implemented yet.", "info");
+          // await realApi.createResource(data, token);
+          // showToast("Resource added.", "success");
+          // fetchResources();
       } catch (e) {
           showToast("Failed to add resource.", "error");
       } finally {

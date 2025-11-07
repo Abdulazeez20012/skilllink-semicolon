@@ -12,9 +12,10 @@ import { ROUTES } from '../constants';
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const { showToast, ToastComponent } = useToast();
 
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.STUDENT);
@@ -27,10 +28,14 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await login({ email, password });
+      if (isSignup) {
+        await register({ name, email, password, role });
+      } else {
+        await login({ email, password });
+      }
       // The navigation is handled inside the auth context
     } catch (error) {
-      showToast('Login failed. Please check your credentials.', 'error');
+      showToast(isSignup ? 'Registration failed. Please try again.' : 'Login failed. Please check your credentials.', 'error');
       setIsLoading(false);
     }
   };
@@ -57,6 +62,20 @@ const LoginPage: React.FC = () => {
           <p className="text-neutral-gray-light mb-8">{isSignup ? 'Join the community.' : 'Sign in to continue.'}</p>
           
           <form onSubmit={handleSubmit}>
+            {isSignup && (
+              <div className="mb-4">
+                <Input
+                  label="Full Name"
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+            )}
+            
             <div className="mb-6">
               <label className="block text-sm font-medium text-neutral-gray-light mb-2">I am a...</label>
               <div className="flex bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-lg p-1">

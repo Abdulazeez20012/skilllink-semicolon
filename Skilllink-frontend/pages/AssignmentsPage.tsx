@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Assignment, Cohort, UserRole } from '../types';
-import { api } from '../services/api';
+import { realApi } from '../services/realApi';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Spinner from '../components/ui/Spinner';
@@ -107,9 +107,14 @@ const AssignmentsPage: React.FC = () => {
     if (!user) return;
     try {
       setLoading(true);
+      const token = localStorage.getItem('skilllink_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const [assignmentsData, cohortsData] = await Promise.all([
-        api.getAssignments(user),
-        api.getCohorts(user)
+        realApi.getAssignments(token),
+        realApi.getCohorts(token)
       ]);
       
       const newCohortMap: Record<string, string> = {};
@@ -139,9 +144,15 @@ const AssignmentsPage: React.FC = () => {
   const handleDelete = async (id: string) => {
       if (window.confirm("Are you sure you want to delete this assignment?")) {
           try {
-              await api.deleteAssignment(id);
-              showToast("Assignment deleted.", "success");
-              fetchData();
+              const token = localStorage.getItem('skilllink_token');
+              if (!token) {
+                throw new Error('No authentication token found');
+              }
+              // Note: There's no deleteAssignment in realApi yet, so we'll just show a message
+              showToast("Delete functionality not implemented yet.", "info");
+              // await realApi.deleteAssignment(id, token);
+              // showToast("Assignment deleted.", "success");
+              // fetchData();
           } catch(e) {
               showToast("Failed to delete assignment.", "error");
           }
@@ -150,12 +161,21 @@ const AssignmentsPage: React.FC = () => {
 
   const handleSave = async (data: any) => {
       try {
+          const token = localStorage.getItem('skilllink_token');
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
+          
           if (editingAssignment) {
-              await api.updateAssignment(editingAssignment.id, data);
-              showToast("Assignment updated.", "success");
+              // Note: There's no updateAssignment in realApi yet, so we'll just show a message
+              showToast("Update functionality not implemented yet.", "info");
+              // await realApi.updateAssignment(editingAssignment.id, data, token);
+              // showToast("Assignment updated.", "success");
           } else {
-              await api.createAssignment(data);
-              showToast("Assignment created.", "success");
+              // Note: There's no createAssignment in realApi yet, so we'll just show a message
+              showToast("Create functionality not implemented yet.", "info");
+              // await realApi.createAssignment(data, token);
+              // showToast("Assignment created.", "success");
           }
           fetchData();
       } catch (e) {

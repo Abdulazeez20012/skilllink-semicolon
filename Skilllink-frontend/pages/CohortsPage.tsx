@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { api } from '../services/api';
+import { realApi } from '../services/realApi';
 import { Cohort, UserRole } from '../types';
 import Card from '../components/ui/Card';
 import Spinner from '../components/ui/Spinner';
@@ -94,7 +94,12 @@ const CohortsPage: React.FC = () => {
     if (!user) return;
     try {
       setLoading(true);
-      const data = await api.getCohorts(user);
+      const token = localStorage.getItem('skilllink_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const data = await realApi.getCohorts(token);
       setCohorts(data);
     } catch (error) {
       console.error("Failed to fetch cohorts", error);
@@ -117,9 +122,15 @@ const CohortsPage: React.FC = () => {
   const handleDelete = async (id: string) => {
       if (window.confirm("Are you sure you want to delete this cohort?")) {
           try {
-              await api.deleteCohort(id);
-              showToast("Cohort deleted successfully.", "success");
-              fetchCohorts(); // Refetch
+              const token = localStorage.getItem('skilllink_token');
+              if (!token) {
+                throw new Error('No authentication token found');
+              }
+              // Note: There's no deleteCohort in realApi yet, so we'll just show a message
+              showToast("Delete functionality not implemented yet.", "info");
+              // await realApi.deleteCohort(id, token);
+              // showToast("Cohort deleted successfully.", "success");
+              // fetchCohorts(); // Refetch
           } catch(e) {
               showToast("Failed to delete cohort.", "error");
           }
@@ -128,12 +139,21 @@ const CohortsPage: React.FC = () => {
 
   const handleSave = async (data: any) => {
       try {
+          const token = localStorage.getItem('skilllink_token');
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
+          
           if (editingCohort) {
-              await api.updateCohort(editingCohort.id, data);
-              showToast("Cohort updated successfully.", "success");
+              // Note: There's no updateCohort in realApi yet, so we'll just show a message
+              showToast("Update functionality not implemented yet.", "info");
+              // await realApi.updateCohort(editingCohort.id, data, token);
+              // showToast("Cohort updated successfully.", "success");
           } else {
-              await api.createCohort(data);
-              showToast("Cohort created successfully.", "success");
+              // Note: There's no createCohort in realApi yet, so we'll just show a message
+              showToast("Create functionality not implemented yet.", "info");
+              // await realApi.createCohort(data, token);
+              // showToast("Cohort created successfully.", "success");
           }
           fetchCohorts();
       } catch (e) {
