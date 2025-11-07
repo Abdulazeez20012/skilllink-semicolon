@@ -39,6 +39,11 @@ app.use(express.json({
   limit: process.env.FILE_SIZE_LIMIT || '10mb'
 }));
 
+// Health check endpoint
+app.get('/api', (req, res) => {
+  res.json({ message: 'SkillLink API is running', timestamp: new Date().toISOString() });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/assignments', assignmentRoutes);
