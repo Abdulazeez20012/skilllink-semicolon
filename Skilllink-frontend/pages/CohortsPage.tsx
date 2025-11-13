@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { realApi } from '../services/realApi';
-import { Cohort, UserRole } from '../types';
+import { Cohort, UserRole, CurriculumItem } from '../types';
 import Card from '../components/ui/Card';
 import Spinner from '../components/ui/Spinner';
 import Button from '../components/ui/Button';
@@ -15,7 +15,119 @@ import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
 import Modal from '../components/ui/Modal';
 import Textarea from '../components/ui/Textarea';
+import Select from '../components/ui/Select';
 import { useToast } from '../hooks/useToast';
+
+const JoinCohortForm: React.FC<{ onJoin: (inviteCode: string) => void; onCancel: () => void; }> = ({ onJoin, onCancel }) => {
+    const [inviteCode, setInviteCode] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onJoin(inviteCode);
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <Input 
+                label="Invite Code" 
+                value={inviteCode} 
+                onChange={e => setInviteCode(e.target.value)} 
+                placeholder="Enter your invite code" 
+                required 
+            />
+            <div className="flex justify-end gap-4 pt-4">
+                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
+                <Button type="submit">Join Cohort</Button>
+            </div>
+        </form>
+    );
+};
+
+const CohortForm: React.FC<{ cohort?: Cohort | null; onSave: (data: any) => void; onCancel: () => void; }> = ({ cohort, onSave, onCancel }) => {
+    const [name, setName] = useState(cohort?.name || '');
+    const [description, setDescription] = useState(cohort?.description || '');
+    const [tags, setTags] = useState(cohort?.tags?.join(', ') || '');
+    const [startDate, setStartDate] = useState(cohort?.startDate || '');
+    const [endDate, setEndDate] = useState(cohort?.endDate || '');
+    const [curriculumTrack, setCurriculumTrack] = useState(cohort?.curriculumTrack || 'Full-Stack');
+    const [curriculum, setCurriculum] = useState<CurriculumItem[]>(cohort?.curriculum || []);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave({ 
+            name, 
+            description, 
+            programmingLanguage: tags.split(',').map(t => t.trim()).filter(Boolean)[0] || 'General',
+            startDate,
+            endDate,
+            curriculumTrack,
+            curriculum
+        });
+    };
+
+    // Function to add a new curriculum item
+    const addCurriculumItem = () => {
+        setCurriculum([
+            ...curriculum,
+            {
+                week: curriculum.length + 1,
+                topics: [],
+                assignments: []
+            }
+        ]);
+    };
+
+    // Function to update a curriculum item
+    const updateCurriculumItem = (index: number, field: keyof CurriculumItem, value: any) => {
+        const updatedCurriculum = [...curriculum];
+        updatedCurriculum[index] = {
+            ...updatedCurriculum[index],
+            [field]: value
+        };
+        setCurriculum(updatedCurriculum);
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <Input label="Cohort Name" value={name} onChange={e => setName(e.target.value)} required />
+            <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} required />
+            <Input label="Start Date" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required />
+            <Input label="End Date" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required />
+            <Select label="Curriculum Track" value={curriculumTrack} onChange={e => setCurriculumTrack(e.target.value)} required>
+                <option value="Full-Stack">Full-Stack</option>
+                <option value="Data Science">Data Science</option>
+                <option value="Mobile Development">Mobile Development</option>
+                <option value="DevOps">DevOps</option>
+                <option value="Cybersecurity">Cybersecurity</option>
+            </Select>
+            <Input label="Primary Tag (Programming Language)" value={tags} onChange={e => setTags(e.target.value)} placeholder="e.g. JavaScript, Python, Java" required />
+            
+            <div className="border-t border-neutral-light-gray dark:border-neutral-gray-medium pt-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold">Curriculum Roadmap</h3>
+                    <Button type="button" variant="secondary" size="sm" onClick={addCurriculumItem}>Add Week</Button>
+                </div>
+                
+                {curriculum.map((item, index) => (
+                    <div key={index} className="mb-4 p-4 border border-neutral-light-gray dark:border-neutral-gray-medium rounded">
+                        <h4 className="font-bold mb-2">Week {item.week}</h4>
+                        <Input 
+                            label="Topics (comma separated)" 
+                            value={item.topics.join(', ')} 
+                            onChange={e => updateCurriculumItem(index, 'topics', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
+                        />
+                    </div>
+                ))}
+            </div>
+            
+            <div className="flex justify-end gap-4 pt-4">
+                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
+                <Button type="submit">Save Cohort</Button>
+            </div>
+        </form>
+    );
+};
+
 
 const CohortCard: React.FC<{ cohort: Cohort; onEdit: (c: Cohort) => void; onDelete: (id: string) => void; }> = ({ cohort, onEdit, onDelete }) => {
     const { user } = useAuth();
@@ -49,30 +161,6 @@ const CohortCard: React.FC<{ cohort: Cohort; onEdit: (c: Cohort) => void; onDele
     )
 };
 
-const CohortForm: React.FC<{ cohort?: Cohort | null; onSave: (data: any) => void; onCancel: () => void; }> = ({ cohort, onSave, onCancel }) => {
-    const [name, setName] = useState(cohort?.name || '');
-    const [description, setDescription] = useState(cohort?.description || '');
-    const [tags, setTags] = useState(cohort?.tags?.join(', ') || '');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSave({ name, description, tags: tags.split(',').map(t => t.trim()).filter(Boolean) });
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Cohort Name" value={name} onChange={e => setName(e.target.value)} required />
-            <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} required />
-            <Input label="Tags (comma-separated)" value={tags} onChange={e => setTags(e.target.value)} placeholder="e.g. Java, Backend" />
-            <div className="flex justify-end gap-4 pt-4">
-                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-                <Button type="submit">Save Cohort</Button>
-            </div>
-        </form>
-    );
-};
-
-
 const CohortsPage: React.FC = () => {
   const { user } = useAuth();
   const { showToast, ToastComponent } = useToast();
@@ -82,6 +170,7 @@ const CohortsPage: React.FC = () => {
   const [activeTag, setActiveTag] = useState('All');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
 
   const allTags = useMemo(() => ['All', ...new Set(cohorts.flatMap(c => c.tags || []))], [cohorts]);
@@ -126,11 +215,9 @@ const CohortsPage: React.FC = () => {
               if (!token) {
                 throw new Error('No authentication token found');
               }
-              // Note: There's no deleteCohort in realApi yet, so we'll just show a message
-              showToast("Delete functionality not implemented yet.", "info");
-              // await realApi.deleteCohort(id, token);
-              // showToast("Cohort deleted successfully.", "success");
-              // fetchCohorts(); // Refetch
+              await realApi.deleteCohort(id, token);
+              showToast("Cohort deleted successfully.", "success");
+              fetchCohorts(); // Refetch
           } catch(e) {
               showToast("Failed to delete cohort.", "error");
           }
@@ -145,21 +232,46 @@ const CohortsPage: React.FC = () => {
           }
           
           if (editingCohort) {
-              // Note: There's no updateCohort in realApi yet, so we'll just show a message
-              showToast("Update functionality not implemented yet.", "info");
-              // await realApi.updateCohort(editingCohort.id, data, token);
-              // showToast("Cohort updated successfully.", "success");
+              await realApi.updateCohort(editingCohort.id, data, token);
+              showToast("Cohort updated successfully.", "success");
           } else {
-              // Note: There's no createCohort in realApi yet, so we'll just show a message
-              showToast("Create functionality not implemented yet.", "info");
-              // await realApi.createCohort(data, token);
-              // showToast("Cohort created successfully.", "success");
+              // Convert tags to programmingLanguage for cohort creation
+              const cohortData = {
+                  name: data.name,
+                  description: data.description,
+                  programmingLanguage: data.programmingLanguage,
+                  startDate: data.startDate,
+                  endDate: data.endDate,
+                  curriculumTrack: data.curriculumTrack,
+                  curriculum: data.curriculum
+              };
+              await realApi.createCohort(cohortData, token);
+              showToast("Cohort created successfully.", "success");
           }
           fetchCohorts();
-      } catch (e) {
-          showToast(`Failed to save cohort.`, "error");
+      } catch (e: any) {
+          console.error('Error saving cohort:', e);
+          showToast(`Failed to save cohort: ${e.message || 'Unknown error'}`, "error");
       } finally {
           setIsModalOpen(false);
+      }
+  }
+
+  const handleJoinCohort = async (inviteCode: string) => {
+      try {
+          const token = localStorage.getItem('skilllink_token');
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
+          
+          const result = await realApi.joinCohortByInviteCode(inviteCode, token);
+          showToast(result.message, "success");
+          fetchCohorts();
+      } catch (e: any) {
+          console.error('Error joining cohort:', e);
+          showToast(`Failed to join cohort: ${e.message || 'Unknown error'}`, "error");
+      } finally {
+          setIsJoinModalOpen(false);
       }
   }
 
@@ -177,6 +289,10 @@ const CohortsPage: React.FC = () => {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingCohort ? "Edit Cohort" : "Create Cohort"}>
           <CohortForm cohort={editingCohort} onSave={handleSave} onCancel={() => setIsModalOpen(false)} />
       </Modal>
+      
+      <Modal isOpen={isJoinModalOpen} onClose={() => setIsJoinModalOpen(false)} title="Join Cohort">
+          <JoinCohortForm onJoin={handleJoinCohort} onCancel={() => setIsJoinModalOpen(false)} />
+      </Modal>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 animate-fade-in-up">
         <div>
@@ -185,7 +301,14 @@ const CohortsPage: React.FC = () => {
             {user?.role === UserRole.FACILITATOR ? "Manage your cohorts or create a new one." : "Your learning groups and assignments."}
           </p>
         </div>
-        {user?.role === UserRole.FACILITATOR && (<Button onClick={handleCreate} leftIcon={<PlusIcon />}>Create Cohort</Button>)}
+        <div className="flex gap-2">
+          {user?.role === UserRole.STUDENT && (
+            <Button variant="secondary" onClick={() => setIsJoinModalOpen(true)}>Join with Code</Button>
+          )}
+          {user?.role === UserRole.FACILITATOR && (
+            <Button onClick={handleCreate} leftIcon={<PlusIcon />}>Create Cohort</Button>
+          )}
+        </div>
       </div>
       
       <div className="mb-8 flex flex-col md:flex-row gap-4 animate-fade-in-up" style={{ animationDelay: '100ms' }}>

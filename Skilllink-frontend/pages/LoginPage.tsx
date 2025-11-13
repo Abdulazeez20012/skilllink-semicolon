@@ -1,28 +1,30 @@
-import React, { useState, FormEvent } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import React, { useState, FormEvent, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { UserRole } from '../types';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Spinner from '../components/ui/Spinner';
-import LogoIcon from '../components/icons/LogoIcon';
 import { useToast } from '../hooks/useToast';
+import Logo from '../components/Logo';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
+import Spinner from '../components/ui/Spinner';
 import { ROUTES } from '../constants';
+import { UserRole } from '../types';
 
 const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { login, register } = useAuth();
-  const { showToast, ToastComponent } = useToast();
-
+  const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.STUDENT);
   const [isLoading, setIsLoading] = useState(false);
-  
-  const from = location.state?.from?.pathname || ROUTES.DASHBOARD;
-  const isSignup = location.pathname === '/signup';
+  const { login, register } = useAuth();
+  const { showToast, ToastComponent } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Set initial state based on the current route
+  useEffect(() => {
+    setIsSignup(location.pathname === ROUTES.SIGNUP);
+  }, [location.pathname]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -30,10 +32,11 @@ const LoginPage: React.FC = () => {
     try {
       if (isSignup) {
         await register({ name, email, password, role });
+        showToast('Account created successfully!', 'success');
       } else {
         await login({ email, password });
       }
-      // The navigation is handled inside the auth context
+      navigate(ROUTES.DASHBOARD);
     } catch (error) {
       showToast(isSignup ? 'Registration failed. Please try again.' : 'Login failed. Please check your credentials.', 'error');
       setIsLoading(false);
@@ -41,7 +44,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-light-gray dark:bg-neutral-soft-black p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-secondary dark:bg-neutral-soft-black">
       <ToastComponent />
       <div className="w-full max-w-4xl flex flex-col md:flex-row bg-secondary dark:bg-neutral-gray-dark rounded-2xl shadow-2xl overflow-hidden animate-fade-in-zoom">
         {/* Left Side (Branding) */}
@@ -49,7 +52,7 @@ const LoginPage: React.FC = () => {
             <div className="absolute -top-20 -left-20 w-64 h-64 bg-white/10 rounded-full"></div>
             <div className="absolute -bottom-24 -right-10 w-72 h-72 bg-white/10 rounded-full"></div>
             <div className="relative z-10">
-                <LogoIcon size={64} />
+                <Logo size={64} />
                 <h1 className="text-4xl font-bold font-heading mt-4">SkillLink</h1>
                 <p className="mt-2 text-white/80">by Semicolon</p>
                 <p className="mt-8 text-lg">Empowering the future of learning, one assignment at a time.</p>

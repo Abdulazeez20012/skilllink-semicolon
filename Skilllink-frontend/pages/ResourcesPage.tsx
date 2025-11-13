@@ -91,11 +91,9 @@ const ResourcesPage: React.FC = () => {
             throw new Error('No authentication token found');
           }
           
-          // Note: There's no createResource in realApi yet, so we'll just show a message
-          showToast("Create functionality not implemented yet.", "info");
-          // await realApi.createResource(data, token);
-          // showToast("Resource added.", "success");
-          // fetchResources();
+          await realApi.createResource(data, token);
+          showToast("Resource added.", "success");
+          fetchResources();
       } catch (e) {
           showToast("Failed to add resource.", "error");
       } finally {

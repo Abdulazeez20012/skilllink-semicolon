@@ -1,5 +1,6 @@
 const Submission = require('../models/Submission');
 const Assignment = require('../models/Assignment');
+const githubService = require('../services/githubService');
 
 // @desc    Submit an assignment
 // @route   POST /api/submissions
@@ -30,13 +31,31 @@ const submitAssignment = async (req, res) => {
       return res.status(400).json({ message: 'Due date has passed for this assignment' });
     }
     
-    // Create submission
-    const submission = await Submission.create({
+    // Initialize submission data
+    const submissionData = {
       assignmentId,
       studentId: req.user._id,
       projectLink,
       fileUpload
-    });
+    };
+    
+    // If projectLink is a GitHub URL, fetch additional information
+    if (projectLink && projectLink.includes('github.com')) {
+      try {
+        const githubData = await githubService.fetchRepoData(projectLink);
+        
+        submissionData.githubRepoUrl = githubData.url;
+        submissionData.githubCommitMessage = githubData.latestCommit?.message;
+        submissionData.githubLastCommitDate = githubData.latestCommit?.date;
+        submissionData.githubReadme = githubData.readme;
+      } catch (githubError) {
+        // Log the error but don't fail the submission
+        console.error('Failed to fetch GitHub data:', githubError.message);
+      }
+    }
+    
+    // Create submission
+    const submission = await Submission.create(submissionData);
     
     res.status(201).json(submission);
   } catch (error) {
@@ -152,6 +171,21 @@ const updateSubmission = async (req, res) => {
     
     submission.projectLink = projectLink || submission.projectLink;
     submission.fileUpload = fileUpload || submission.fileUpload;
+    
+    // If projectLink is a GitHub URL, fetch additional information
+    if (projectLink && projectLink.includes('github.com')) {
+      try {
+        const githubData = await githubService.fetchRepoData(projectLink);
+        
+        submission.githubRepoUrl = githubData.url;
+        submission.githubCommitMessage = githubData.latestCommit?.message;
+        submission.githubLastCommitDate = githubData.latestCommit?.date;
+        submission.githubReadme = githubData.readme;
+      } catch (githubError) {
+        // Log the error but don't fail the update
+        console.error('Failed to fetch GitHub data:', githubError.message);
+      }
+    }
     
     const updatedSubmission = await submission.save();
     

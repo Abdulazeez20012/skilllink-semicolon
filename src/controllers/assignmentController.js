@@ -1,12 +1,14 @@
 const Assignment = require('../models/Assignment');
 const Discussion = require('../models/Discussion');
+const Cohort = require('../models/Cohort');
+const Submission = require('../models/Submission');
 
 // @desc    Create a new assignment
 // @route   POST /api/assignments
 // @access  Private/Facilitator
 const createAssignment = async (req, res) => {
   try {
-    const { title, description, dueDate, resources } = req.body;
+    const { title, description, dueDate, resources, cohort } = req.body;
     
     // Create assignment
     const assignment = await Assignment.create({
@@ -14,8 +16,14 @@ const createAssignment = async (req, res) => {
       description,
       dueDate,
       resources,
+      cohort, // Add cohort field
       createdBy: req.user._id
     });
+    
+    // Add assignment to cohort if provided
+    if (cohort) {
+      await Cohort.findByIdAndUpdate(cohort, { $push: { assignments: assignment._id } });
+    }
     
     // Create discussion thread for this assignment
     await Discussion.create({
@@ -125,8 +133,23 @@ const deleteAssignment = async (req, res) => {
 // @access  Private/Facilitator
 const getSubmissionsForAssignment = async (req, res) => {
   try {
-    // This will be implemented in the submission controller
-    res.status(500).json({ message: 'Not implemented yet' });
+    // Check if assignment exists
+    const assignment = await Assignment.findById(req.params.id);
+    
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+    
+    // Check if user is the creator of the assignment
+    if (assignment.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'User not authorized' });
+    }
+    
+    const submissions = await Submission.find({ assignmentId: req.params.id })
+      .populate('studentId', 'name email')
+      .sort({ submittedAt: -1 });
+    
+    res.json(submissions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,6 +1,7 @@
 export enum UserRole {
   STUDENT = 'student',
   FACILITATOR = 'facilitator',
+  ADMIN = 'admin'
 }
 
 export interface User {
@@ -64,6 +65,12 @@ export interface Resource {
     url: string;
 }
 
+export interface CurriculumItem {
+  week: number;
+  topics: string[];
+  assignments: string[]; // Assignment IDs
+}
+
 export interface Cohort {
   id: string;
   name: string;
@@ -72,4 +79,9 @@ export interface Cohort {
   students: Pick<User, 'id' | 'name' | 'avatarUrl'>[];
   imageUrl: string;
   tags?: string[];
+  startDate?: string;
+  endDate?: string;
+  curriculumTrack?: string;
+  curriculum?: CurriculumItem[];
+  inviteCode?: string;
 }

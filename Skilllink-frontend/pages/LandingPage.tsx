@@ -1,15 +1,12 @@
 import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
-import LogoIcon from '../components/icons/LogoIcon';
+import Logo from '../components/Logo';
 import { ROUTES } from '../constants';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import ArrowRightIcon from '../components/icons/ArrowRightIcon';
 import PartnerLogo from '../components/PartnerLogo';
 import FeatureIllustration from '../components/FeatureIllustration';
-import IllustrationStudentDesk from '../components/illustrations/IllustrationStudentDesk';
-import IllustrationCollaboration from '../components/illustrations/IllustrationCollaboration';
-import IllustrationVideoCall from '../components/illustrations/IllustrationVideoCall';
 import { USER_AVATARS } from '../images';
 
 const AnimatedSection: React.FC<{ children: React.ReactNode; className?: string, id?: string, style?: React.CSSProperties }> = ({ children, className, id, style }) => {
@@ -43,7 +40,7 @@ const LandingPage: React.FC = () => {
       <header className="fixed top-6 left-1/2 -translate-x-1/2 z-50">
           <div className="flex justify-between items-center p-2 bg-white/60 dark:bg-neutral-gray-dark/60 backdrop-blur-lg rounded-full border border-neutral-light-gray/50 dark:border-neutral-gray-medium/50 shadow-sm">
             <Link to="/" className="flex items-center">
-              <LogoIcon className="text-primary" size={32} />
+              <Logo className="text-primary" size={32} />
               <span className="ml-2 text-xl font-bold font-heading hidden sm:block">SkillLink</span>
             </Link>
             <nav className="flex items-center space-x-4 pr-2">

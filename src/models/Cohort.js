@@ -16,6 +16,35 @@ const cohortSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  // New fields for enhanced cohort management
+  startDate: {
+    type: Date,
+    required: true
+  },
+  endDate: {
+    type: Date,
+    required: true
+  },
+  curriculumTrack: {
+    type: String,
+    enum: ['Full-Stack', 'Data Science', 'Mobile Development', 'DevOps', 'Cybersecurity'],
+    required: true
+  },
+  // Curriculum roadmap
+  curriculum: [{
+    week: {
+      type: Number,
+      required: true
+    },
+    topics: [{
+      type: String,
+      required: true
+    }],
+    assignments: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Assignment'
+    }]
+  }],
   facilitators: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
@@ -27,7 +56,12 @@ const cohortSchema = new mongoose.Schema({
   assignments: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Assignment'
-  }]
+  }],
+  // For invite links/codes
+  inviteCode: {
+    type: String,
+    unique: true
+  }
 }, {
   timestamps: true
 });

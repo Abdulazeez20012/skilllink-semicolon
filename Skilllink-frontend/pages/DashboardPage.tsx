@@ -11,31 +11,53 @@ import PlusIcon from '../components/icons/PlusIcon';
 import UsersIcon from '../components/icons/UsersIcon';
 import FileClockIcon from '../components/icons/FileClockIcon';
 import ClipboardCheckIcon from '../components/icons/ClipboardCheckIcon';
+import ChartIcon from '../components/icons/ChartIcon';
+import ProgressTracker from '../components/ProgressTracker';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [cohorts, setCohorts] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAssignments = async () => {
+    const fetchData = async () => {
       if (!user) return;
       try {
+        setLoading(true);
         const token = localStorage.getItem('skilllink_token');
         if (!token) {
           throw new Error('No authentication token found');
         }
         
-        const data = await realApi.getAssignments(token);
-        setAssignments(data);
+        // Fetch assignments
+        const assignmentsData = await realApi.getAssignments(token);
+        setAssignments(assignmentsData);
+        
+        // For admins, also fetch cohort data for analytics
+        if (user.role === UserRole.ADMIN) {
+          const cohortsData = await realApi.getCohorts(token);
+          setCohorts(cohortsData);
+        }
+        
+        // For students, fetch attendance data
+        if (user.role === UserRole.STUDENT && assignmentsData.length > 0) {
+          // Get the first cohort for now (in a real app, we'd handle multiple cohorts)
+          const cohortId = assignmentsData[0].cohortId;
+          if (cohortId) {
+            const attendanceData = await realApi.getStudentAttendance(cohortId, token);
+            setAttendance(attendanceData);
+          }
+        }
       } catch (error) {
-        console.error('Failed to fetch assignments', error);
+        console.error('Failed to fetch data', error);
       } finally {
         setLoading(false);
       }
     };
     if (user) {
-      fetchAssignments();
+      fetchData();
     }
   }, [user]);
   
@@ -99,20 +121,30 @@ const DashboardPage: React.FC = () => {
                   ) : <p className="text-neutral-gray-light p-3">No upcoming assignments. Great job!</p>}
                 </Card>
             </div>
-            <div>
-                <h2 className="text-2xl font-bold font-heading mb-4 opacity-0 animate-fade-in-up" style={{animationDelay: '300ms'}}>Recent Activity</h2>
-                <Card className="p-6 opacity-0 animate-fade-in-up" style={{animationDelay: '400ms'}}>
-                  {recentSubmissions.length > 0 ? (
-                    <ul className="space-y-4">
-                      {recentSubmissions.map((a, i) => (
-                        <li key={a.id} className="flex items-center justify-between opacity-0 animate-fade-in-up" style={{animationDelay: `${500 + i * 100}ms`}}>
-                            <span className="text-sm">{a.title}</span>
-                            <Badge status={a.status} />
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p className="text-neutral-gray-light">No recent submissions.</p>}
-                </Card>
+            <div className="space-y-8">
+                <div>
+                    <h2 className="text-2xl font-bold font-heading mb-4 opacity-0 animate-fade-in-up" style={{animationDelay: '300ms'}}>Progress Tracker</h2>
+                    <ProgressTracker 
+                      assignments={assignments} 
+                      currentStreak={attendance?.currentStreak}
+                      longestStreak={attendance?.longestStreak}
+                    />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-bold font-heading mb-4 opacity-0 animate-fade-in-up" style={{animationDelay: '500ms'}}>Recent Activity</h2>
+                    <Card className="p-6 opacity-0 animate-fade-in-up" style={{animationDelay: '600ms'}}>
+                      {recentSubmissions.length > 0 ? (
+                        <ul className="space-y-4">
+                          {recentSubmissions.map((a, i) => (
+                            <li key={a.id} className="flex items-center justify-between opacity-0 animate-fade-in-up" style={{animationDelay: `${700 + i * 100}ms`}}>
+                                <span className="text-sm">{a.title}</span>
+                                <Badge status={a.status} />
+                            </li>
+                          ))}
+                        </ul>
+                      ) : <p className="text-neutral-gray-light">No recent submissions.</p>}
+                    </Card>
+                </div>
             </div>
         </div>
     );
@@ -133,6 +165,94 @@ const DashboardPage: React.FC = () => {
           </div>
       );
   };
+  
+  const AdminDashboard = () => {
+    // Calculate analytics
+    const totalStudents = cohorts.reduce((sum, cohort) => sum + cohort.students.length, 0);
+    const totalFacilitators = cohorts.reduce((sum, cohort) => sum + cohort.facilitators.length, 0);
+    const totalCohorts = cohorts.length;
+    
+    // Calculate assignment stats
+    const totalAssignments = assignments.length;
+    const pendingAssignments = assignments.filter(a => a.status === AssignmentStatus.PENDING).length;
+    const submittedAssignments = assignments.filter(a => a.status === AssignmentStatus.SUBMITTED).length;
+    const gradedAssignments = assignments.filter(a => a.status === AssignmentStatus.GRADED).length;
+    
+    return (
+        <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <StatCard icon={<UsersIcon />} label="Total Students" value={totalStudents} delay={100}/>
+              <StatCard icon={<ClipboardCheckIcon />} label="Total Facilitators" value={totalFacilitators} delay={200}/>
+              <StatCard icon={<FileClockIcon />} label="Active Cohorts" value={totalCohorts} delay={300}/>
+              <StatCard icon={<ChartIcon />} label="Total Assignments" value={totalAssignments} delay={400}/>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="p-6">
+                <h3 className="text-2xl font-bold font-heading mb-6">Cohort Distribution</h3>
+                <div className="space-y-4">
+                  {cohorts.map((cohort, index) => (
+                    <div key={cohort.id} className="opacity-0 animate-fade-in-up" style={{ animationDelay: `${100 + index * 50}ms`}}>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium">{cohort.name}</span>
+                        <span className="text-sm">{cohort.students.length} students</span>
+                      </div>
+                      <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full" 
+                          style={{ width: `${Math.min(100, (cohort.students.length / 50) * 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              
+              <Card className="p-6">
+                <h3 className="text-2xl font-bold font-heading mb-6">Assignment Status</h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="font-medium">Pending</span>
+                      <span className="text-sm">{pendingAssignments}</span>
+                    </div>
+                    <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
+                      <div 
+                        className="bg-yellow-500 h-2 rounded-full" 
+                        style={{ width: `${(pendingAssignments / Math.max(1, totalAssignments)) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="font-medium">Submitted</span>
+                      <span className="text-sm">{submittedAssignments}</span>
+                    </div>
+                    <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full" 
+                        style={{ width: `${(submittedAssignments / Math.max(1, totalAssignments)) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="font-medium">Graded</span>
+                      <span className="text-sm">{gradedAssignments}</span>
+                    </div>
+                    <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
+                      <div 
+                        className="bg-green-500 h-2 rounded-full" 
+                        style={{ width: `${(gradedAssignments / Math.max(1, totalAssignments)) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+        </div>
+    );
+  };
 
   if (loading) {
     return <div className="flex justify-center items-center h-full"><Spinner size="lg" /></div>;
@@ -141,7 +261,9 @@ const DashboardPage: React.FC = () => {
   return (
     <div>
       <PageHeader />
-      {user?.role === UserRole.STUDENT ? <StudentDashboard /> : <FacilitatorDashboard />}
+      {user?.role === UserRole.STUDENT && <StudentDashboard />}
+      {user?.role === UserRole.FACILITATOR && <FacilitatorDashboard />}
+      {user?.role === UserRole.ADMIN && <AdminDashboard />}
     </div>
   );
 };

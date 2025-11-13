@@ -148,11 +148,9 @@ const AssignmentsPage: React.FC = () => {
               if (!token) {
                 throw new Error('No authentication token found');
               }
-              // Note: There's no deleteAssignment in realApi yet, so we'll just show a message
-              showToast("Delete functionality not implemented yet.", "info");
-              // await realApi.deleteAssignment(id, token);
-              // showToast("Assignment deleted.", "success");
-              // fetchData();
+              await realApi.deleteAssignment(id, token);
+              showToast("Assignment deleted.", "success");
+              fetchData();
           } catch(e) {
               showToast("Failed to delete assignment.", "error");
           }
@@ -167,19 +165,23 @@ const AssignmentsPage: React.FC = () => {
           }
           
           if (editingAssignment) {
-              // Note: There's no updateAssignment in realApi yet, so we'll just show a message
-              showToast("Update functionality not implemented yet.", "info");
-              // await realApi.updateAssignment(editingAssignment.id, data, token);
-              // showToast("Assignment updated.", "success");
+              await realApi.updateAssignment(editingAssignment.id, data, token);
+              showToast("Assignment updated.", "success");
           } else {
-              // Note: There's no createAssignment in realApi yet, so we'll just show a message
-              showToast("Create functionality not implemented yet.", "info");
-              // await realApi.createAssignment(data, token);
-              // showToast("Assignment created.", "success");
+              // Create the assignment with the proper data structure
+              const assignmentData = {
+                  title: data.title,
+                  description: data.description,
+                  dueDate: data.dueDate,
+                  cohortId: data.cohortId
+              };
+              await realApi.createAssignment(assignmentData, token);
+              showToast("Assignment created successfully.", "success");
           }
           fetchData();
-      } catch (e) {
-          showToast(`Failed to save assignment.`, "error");
+      } catch (e: any) {
+          console.error('Error saving assignment:', e);
+          showToast(`Failed to save assignment: ${e.message || 'Unknown error'}`, "error");
       } finally {
           setIsModalOpen(false);
       }

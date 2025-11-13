@@ -25,6 +25,19 @@ const submissionSchema = new mongoose.Schema({
   },
   feedback: {
     type: String
+  },
+  // GitHub integration fields
+  githubRepoUrl: {
+    type: String
+  },
+  githubCommitMessage: {
+    type: String
+  },
+  githubLastCommitDate: {
+    type: Date
+  },
+  githubReadme: {
+    type: String
   }
 }, {
   timestamps: true

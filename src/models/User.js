@@ -34,6 +34,18 @@ const userSchema = new mongoose.Schema({
   cohort: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Cohort'
+  },
+  // Attendance streak tracking
+  currentStreak: {
+    type: Number,
+    default: 0
+  },
+  longestStreak: {
+    type: Number,
+    default: 0
+  },
+  lastAttendanceDate: {
+    type: Date
   }
 }, {
   timestamps: true

@@ -1,13 +1,14 @@
 const Cohort = require('../models/Cohort');
 const User = require('../models/User');
 const Assignment = require('../models/Assignment');
+const crypto = require('crypto'); // For generating invite codes
 
 // @desc    Create a new cohort
 // @route   POST /api/cohorts
-// @access  Private/Admin
+// @access  Private/Facilitator
 const createCohort = async (req, res) => {
   try {
-    const { name, description, programmingLanguage } = req.body;
+    const { name, description, programmingLanguage, startDate, endDate, curriculumTrack, curriculum } = req.body;
     
     // Check if cohort with this name already exists
     const existingCohort = await Cohort.findOne({ name });
@@ -16,12 +17,27 @@ const createCohort = async (req, res) => {
       return res.status(400).json({ message: 'Cohort with this name already exists' });
     }
     
+    // Generate unique invite code
+    const inviteCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+    
     // Create cohort
     const cohort = await Cohort.create({
       name,
       description,
-      programmingLanguage
+      programmingLanguage,
+      startDate,
+      endDate,
+      curriculumTrack,
+      curriculum: curriculum || [],
+      inviteCode
     });
+    
+    // Automatically assign the creator as a facilitator
+    cohort.facilitators.push(req.user._id);
+    await cohort.save();
+    
+    // Also update the user's cohort field
+    await User.findByIdAndUpdate(req.user._id, { cohort: cohort._id });
     
     res.status(201).json(cohort);
   } catch (error) {
@@ -64,7 +80,8 @@ const getCohortById = async (req, res) => {
     const cohort = await Cohort.findById(req.params.id)
       .populate('facilitators', 'name email')
       .populate('students', 'name email')
-      .populate('assignments');
+      .populate('assignments')
+      .populate('curriculum.assignments');
     
     if (!cohort) {
       return res.status(404).json({ message: 'Cohort not found' });
@@ -81,7 +98,7 @@ const getCohortById = async (req, res) => {
 // @access  Private/Admin
 const updateCohort = async (req, res) => {
   try {
-    const { name, description, programmingLanguage } = req.body;
+    const { name, description, programmingLanguage, startDate, endDate, curriculumTrack, curriculum } = req.body;
     
     const cohort = await Cohort.findById(req.params.id);
     
@@ -100,6 +117,10 @@ const updateCohort = async (req, res) => {
     
     cohort.description = description || cohort.description;
     cohort.programmingLanguage = programmingLanguage || cohort.programmingLanguage;
+    cohort.startDate = startDate || cohort.startDate;
+    cohort.endDate = endDate || cohort.endDate;
+    cohort.curriculumTrack = curriculumTrack || cohort.curriculumTrack;
+    cohort.curriculum = curriculum || cohort.curriculum;
     
     const updatedCohort = await cohort.save();
     
@@ -318,28 +339,31 @@ const postAssignmentToCohort = async (req, res) => {
   }
 };
 
-// @desc    Get assignments for cohort
-// @route   GET /api/cohorts/:id/assignments
-// @access  Private
-const getAssignmentsForCohort = async (req, res) => {
+// @desc    Join cohort using invite code
+// @route   POST /api/cohorts/join/:inviteCode
+// @access  Private/Student
+const joinCohortByInviteCode = async (req, res) => {
   try {
-    const cohort = await Cohort.findById(req.params.id);
+    const { inviteCode } = req.params;
+    
+    const cohort = await Cohort.findOne({ inviteCode });
     if (!cohort) {
-      return res.status(404).json({ message: 'Cohort not found' });
+      return res.status(404).json({ message: 'Invalid invite code' });
     }
     
-    // Check if user belongs to this cohort (either as student or facilitator)
-    const isMember = cohort.students.includes(req.user._id) || 
-                     cohort.facilitators.includes(req.user._id);
-    
-    if (!isMember) {
-      return res.status(401).json({ message: 'User not authorized to view assignments for this cohort' });
+    // Check if user is already enrolled in this cohort
+    if (cohort.students.includes(req.user._id)) {
+      return res.status(400).json({ message: 'User is already enrolled in this cohort' });
     }
     
-    const assignments = await Assignment.find({ _id: { $in: cohort.assignments } })
-      .populate('createdBy', 'name');
+    // Add student to cohort
+    cohort.students.push(req.user._id);
+    req.user.cohort = cohort._id;
     
-    res.json(assignments);
+    await cohort.save();
+    await req.user.save();
+    
+    res.json({ message: 'Successfully joined cohort', cohort });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -356,5 +380,6 @@ module.exports = {
   enrollStudent,
   unenrollStudent,
   postAssignmentToCohort,
-  getAssignmentsForCohort
+  getAssignmentsForCohort,
+  joinCohortByInviteCode
 };

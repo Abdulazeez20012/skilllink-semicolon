@@ -1,4 +1,4 @@
-import { User, UserRole, Assignment, Submission, Resource, DiscussionMessage, Cohort, AssignmentStatus, ResourceType } from '../types';
+import { User, UserRole, Assignment, Submission, Resource, DiscussionMessage, Cohort, AssignmentStatus, ResourceType, CurriculumItem } from '../types';
 import { getUserAvatar, getCohortImage } from '../images';
 
 // Get API base URL from environment variables
@@ -22,6 +22,31 @@ const handleResponse = async (response: Response) => {
 export interface LoginCredentials {
   email: string;
   password: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  sessionDate: string;
+  students: {
+    student: {
+      id: string;
+      name: string;
+      email: string;
+    };
+    timestamp: string;
+  }[];
+}
+
+export interface StudentAttendance {
+  totalSessions: number;
+  attendedSessions: number;
+  attendancePercentage: number;
+  currentStreak: number;
+  longestStreak: number;
+  records: {
+    sessionDate: string;
+    attended: boolean;
+  }[];
 }
 
 export const realApi = {
@@ -105,6 +130,11 @@ export const realApi = {
       })),
       imageUrl: getCohortImage(cohort._id),
       tags: [cohort.programmingLanguage],
+      startDate: cohort.startDate,
+      endDate: cohort.endDate,
+      curriculumTrack: cohort.curriculumTrack,
+      curriculum: cohort.curriculum,
+      inviteCode: cohort.inviteCode,
     }));
   },
 
@@ -133,7 +163,124 @@ export const realApi = {
       })),
       imageUrl: getCohortImage(data._id),
       tags: [data.programmingLanguage],
+      startDate: data.startDate,
+      endDate: data.endDate,
+      curriculumTrack: data.curriculumTrack,
+      curriculum: data.curriculum,
+      inviteCode: data.inviteCode,
     };
+  },
+
+  createCohort: async (data: { 
+    name: string; 
+    description: string; 
+    programmingLanguage: string;
+    startDate: string;
+    endDate: string;
+    curriculumTrack: string;
+    curriculum?: CurriculumItem[];
+  }, token: string): Promise<Cohort> => {
+    const response = await fetch(`${API_BASE_URL}/cohorts`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({
+        name: data.name,
+        description: data.description,
+        programmingLanguage: data.programmingLanguage,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        curriculumTrack: data.curriculumTrack,
+        curriculum: data.curriculum,
+      }),
+    });
+    
+    const cohortData = await handleResponse(response);
+    
+    // Transform backend cohort data to frontend cohort data structure
+    return {
+      id: cohortData._id,
+      name: cohortData.name,
+      description: cohortData.description,
+      facilitators: [], // Will be populated when getting cohorts
+      students: [], // Will be populated when getting cohorts
+      imageUrl: getCohortImage(cohortData._id),
+      tags: [cohortData.programmingLanguage],
+      startDate: cohortData.startDate,
+      endDate: cohortData.endDate,
+      curriculumTrack: cohortData.curriculumTrack,
+      curriculum: cohortData.curriculum,
+      inviteCode: cohortData.inviteCode,
+    };
+  },
+
+  updateCohort: async (id: string, data: Partial<Omit<Cohort, 'id' | 'facilitators' | 'students' | 'imageUrl' | 'tags'>>, token: string): Promise<Cohort> => {
+    const response = await fetch(`${API_BASE_URL}/cohorts/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify(data),
+    });
+    
+    const cohortData = await handleResponse(response);
+    
+    // Transform backend cohort data to frontend cohort data structure
+    return {
+      id: cohortData._id,
+      name: cohortData.name,
+      description: cohortData.description,
+      facilitators: [], // Will be populated when getting cohorts
+      students: [], // Will be populated when getting cohorts
+      imageUrl: getCohortImage(cohortData._id),
+      tags: [cohortData.programmingLanguage],
+      startDate: cohortData.startDate,
+      endDate: cohortData.endDate,
+      curriculumTrack: cohortData.curriculumTrack,
+      curriculum: cohortData.curriculum,
+      inviteCode: cohortData.inviteCode,
+    };
+  },
+
+  deleteCohort: async (id: string, token: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/cohorts/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(token),
+    });
+    
+    await handleResponse(response);
+  },
+
+  joinCohortByInviteCode: async (inviteCode: string, token: string): Promise<{ message: string; cohort: Cohort }> => {
+    const response = await fetch(`${API_BASE_URL}/cohorts/join/${inviteCode}`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    
+    // Transform backend cohort data to frontend cohort data structure
+    const cohort: Cohort = {
+      id: data.cohort._id,
+      name: data.cohort.name,
+      description: data.cohort.description,
+      facilitators: data.cohort.facilitators?.map((fac: any) => ({
+        id: fac._id,
+        name: fac.name,
+        avatarUrl: fac.avatar || getUserAvatar(fac._id, fac.name),
+      })) || [],
+      students: data.cohort.students?.map((student: any) => ({
+        id: student._id,
+        name: student.name,
+        avatarUrl: student.avatar || getUserAvatar(student._id, student.name),
+      })) || [],
+      imageUrl: getCohortImage(data.cohort._id),
+      tags: [data.cohort.programmingLanguage],
+      startDate: data.cohort.startDate,
+      endDate: data.cohort.endDate,
+      curriculumTrack: data.cohort.curriculumTrack,
+      curriculum: data.cohort.curriculum,
+      inviteCode: data.cohort.inviteCode,
+    };
+    
+    return { message: data.message, cohort };
   },
 
   // Assignments
@@ -245,6 +392,77 @@ export const realApi = {
       resources: [],
       cohortId: assignmentData.cohort || '',
     };
+  },
+
+  createAssignmentForCohort: async (cohortId: string, data: Pick<Assignment, 'title' | 'description' | 'dueDate' | 'resources'>, token: string): Promise<Assignment> => {
+    const response = await fetch(`${API_BASE_URL}/cohorts/${cohortId}/assignments`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({
+        title: data.title,
+        description: data.description,
+        dueDate: data.dueDate,
+        resources: data.resources,
+      }),
+    });
+    
+    const assignmentData = await handleResponse(response);
+    
+    // Transform backend assignment data to frontend assignment data structure
+    return {
+      id: assignmentData._id,
+      title: assignmentData.title,
+      description: assignmentData.description,
+      dueDate: assignmentData.dueDate,
+      status: AssignmentStatus.PENDING,
+      facilitator: {
+        id: assignmentData.createdBy._id,
+        name: assignmentData.createdBy.name,
+        avatarUrl: assignmentData.createdBy.avatar || getUserAvatar(assignmentData.createdBy._id, assignmentData.createdBy.name),
+      },
+      resources: [],
+      cohortId: cohortId,
+    };
+  },
+
+  updateAssignment: async (id: string, data: Partial<Omit<Assignment, 'id' | 'status' | 'facilitator' | 'resources'>>, token: string): Promise<Assignment> => {
+    const response = await fetch(`${API_BASE_URL}/assignments/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({
+        title: data.title,
+        description: data.description,
+        dueDate: data.dueDate,
+        cohort: data.cohortId,
+      }),
+    });
+    
+    const assignmentData = await handleResponse(response);
+    
+    // Transform backend assignment data to frontend assignment data structure
+    return {
+      id: assignmentData._id,
+      title: assignmentData.title,
+      description: assignmentData.description,
+      dueDate: assignmentData.dueDate,
+      status: AssignmentStatus.PENDING,
+      facilitator: {
+        id: assignmentData.createdBy._id,
+        name: assignmentData.createdBy.name,
+        avatarUrl: assignmentData.createdBy.avatar || getUserAvatar(assignmentData.createdBy._id, assignmentData.createdBy.name),
+      },
+      resources: [],
+      cohortId: assignmentData.cohort || '',
+    };
+  },
+
+  deleteAssignment: async (id: string, token: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/assignments/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(token),
+    });
+    
+    await handleResponse(response);
   },
 
   // Submissions
@@ -481,4 +699,61 @@ export const realApi = {
     const data = await handleResponse(response);
     return data.avatarUrl;
   },
+
+  // Attendance
+  generateQRCode: async (cohortId: string, token: string): Promise<{ qrCodeId: string; qrCodeImage: string; sessionDate: string }> => {
+    const response = await fetch(`${API_BASE_URL}/attendance/generate`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ cohortId }),
+    });
+    
+    const data = await handleResponse(response);
+    return data;
+  },
+
+  markAttendance: async (qrCodeId: string, token: string): Promise<{ message: string; currentStreak: number; longestStreak: number }> => {
+    const response = await fetch(`${API_BASE_URL}/attendance/mark`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+      body: JSON.stringify({ qrCodeId }),
+    });
+    
+    const data = await handleResponse(response);
+    return data;
+  },
+
+  getAttendanceByCohort: async (cohortId: string, token: string): Promise<AttendanceRecord[]> => {
+    const response = await fetch(`${API_BASE_URL}/attendance/cohort/${cohortId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    
+    // Transform backend data to frontend data structure
+    return data.map((record: any) => ({
+      id: record._id,
+      sessionDate: record.sessionDate,
+      students: record.students.map((s: any) => ({
+        student: {
+          id: s.student._id,
+          name: s.student.name,
+          email: s.student.email,
+        },
+        timestamp: s.timestamp,
+      })),
+    }));
+  },
+
+  getStudentAttendance: async (cohortId: string, token: string): Promise<StudentAttendance> => {
+    const response = await fetch(`${API_BASE_URL}/attendance/student/${cohortId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    return data;
+  },
+
 };

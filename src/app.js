@@ -22,6 +22,7 @@ const submissionRoutes = require('./routes/submissionRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const discussionRoutes = require('./routes/discussionRoutes');
 const cohortRoutes = require('./routes/cohortRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
 
 // Connect to database
 connectDB();
@@ -55,6 +56,7 @@ app.use('/api/submissions', submissionRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/discussions', discussionRoutes);
 app.use('/api/cohorts', cohortRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Error handling middleware
 app.use(require('./middleware/errorHandler'));

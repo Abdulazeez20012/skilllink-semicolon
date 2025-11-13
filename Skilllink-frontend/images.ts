@@ -20,13 +20,17 @@ HOW TO REPLACE PLACEHOLDER IMAGES:
    - Update the specific illustration URLs in FEATURE_ILLUSTRATIONS object
    - Replace SVG illustrations with image URLs for easier management
 
-5. The system will automatically use your images without changing any other code
+5. For the main logo:
+   - Update the LOGO_URL to use a real image instead of the SVG logo
+
+6. The system will automatically use your images without changing any other code
 
 Example:
 USER_AVATARS.ADA_LOVELACE = 'https://your-server.com/images/ada-lovelace.jpg'
 COHORT_IMAGES.JAVA = 'https://your-server.com/images/java-cohort-cover.jpg'
 PARTNER_LOGOS.CARTESI = 'https://your-server.com/images/cartesi-logo.png'
 FEATURE_ILLUSTRATIONS.STUDENT_DESK = 'https://your-server.com/images/student-desk.jpg'
+LOGO_URL = 'https://your-server.com/images/logo.png'
 */
 
 // User avatars
@@ -43,9 +47,9 @@ export const USER_AVATARS = {
   TIM_BERNERS_LEE: 'https://picsum.photos/seed/tim/200',
   
   // Community members on landing page
-  COMMUNITY_MEMBER_1: 'https://picsum.photos/seed/person1/100',
-  COMMUNITY_MEMBER_2: 'https://picsum.photos/seed/person2/100',
-  COMMUNITY_MEMBER_3: 'https://picsum.photos/seed/person3/100',
+  COMMUNITY_MEMBER_1: 'https://res.cloudinary.com/dipqudndh/image/upload/v1762530339/Generated_Image_November_07_2025_-_4_44PM_1_lglqgi.png',
+  COMMUNITY_MEMBER_2: 'https://res.cloudinary.com/dipqudndh/image/upload/v1762529812/semicolon_bptdfy.png',
+  COMMUNITY_MEMBER_3: 'https://res.cloudinary.com/dipqudndh/image/upload/v1762529812/semicolon_bptdfy.png',
 };
 
 // Cohort images
@@ -80,10 +84,19 @@ export const FEATURE_ILLUSTRATIONS = {
   // Default to SVG illustrations, but can be replaced with image URLs
   STUDENT_DESK: 'https://res.cloudinary.com/dipqudndh/image/upload/v1762527862/man_sitting_down_ubbfdq.png', // Replace with 'https://your-server.com/images/student-desk.png'
   COLLABORATION: 'https://res.cloudinary.com/dipqudndh/image/upload/v1762527862/man_facing_laptop_uoohfs.png', // Replace with 'https://your-server.com/images/collaboration.png'
-  VIDEO_CALL: 'svg', // Replace with 'https://your-server.com/images/video-call.png'
+  VIDEO_CALL: 'https://res.cloudinary.com/dipqudndh/image/upload/v1762529587/woman_tz7zsv.png', // Replace with 'https://your-server.com/images/video-call.png'
   
   // Default generator for feature illustrations
   DEFAULT_GENERATOR: (illustrationName: string) => `svg`, // Replace with actual image URL generator
+};
+
+// Main logo - replace with actual image URL for easier management
+export const LOGO = {
+  // Default to SVG logo, but can be replaced with image URL
+  URL: 'https://res.cloudinary.com/dipqudndh/image/upload/v1762529812/semicolon_bptdfy.png', // Replace with 'https://your-server.com/images/logo.png'
+  
+  // Default generator for logo
+  DEFAULT_GENERATOR: () => `svg`, // Replace with actual image URL generator
 };
 
 // Utility function to get user avatar - uses default generator if no specific avatar is defined
@@ -160,4 +173,10 @@ export const getFeatureIllustration = (illustrationName: string): string => {
     default:
       return FEATURE_ILLUSTRATIONS.DEFAULT_GENERATOR(illustrationName);
   }
+};
+
+// Utility function to get logo - returns 'svg' for default SVG logo or image URL
+export const getLogo = (): string => {
+  // You can add specific logo mappings here
+  return LOGO.URL !== 'svg' ? LOGO.URL : LOGO.DEFAULT_GENERATOR();
 };

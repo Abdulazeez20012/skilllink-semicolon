@@ -10,7 +10,8 @@ const {
   enrollStudent,
   unenrollStudent,
   postAssignmentToCohort,
-  getAssignmentsForCohort
+  getAssignmentsForCohort,
+  joinCohortByInviteCode
 } = require('../controllers/cohortController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
@@ -24,12 +25,16 @@ router.use(authMiddleware);
 router.route('/')
   .get(getCohorts);
 
-// Admin routes
+// Routes for creating cohorts (admin and facilitators can create)
 router.route('/')
-  .post(roleMiddleware('admin'), createCohort);
+  .post(roleMiddleware('admin', 'facilitator'), createCohort);
 
 router.route('/:id')
   .get(getCohortById);
+
+// Route for joining cohort by invite code (students can join)
+router.route('/join/:inviteCode')
+  .post(joinCohortByInviteCode);
 
 // Admin routes for modifying cohorts
 router.route('/:id')
