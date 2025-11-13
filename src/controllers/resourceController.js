@@ -5,12 +5,17 @@ const Resource = require('../models/Resource');
 // @access  Private/Facilitator
 const createResource = async (req, res) => {
   try {
-    const { title, link } = req.body;
+    const { title, description, link, type, cohort, module, tags } = req.body;
     
     // Create resource
     const resource = await Resource.create({
       title,
+      description,
       link,
+      type,
+      cohort,
+      module,
+      tags,
       uploadedBy: req.user._id
     });
     
@@ -27,6 +32,39 @@ const getResources = async (req, res) => {
   try {
     const resources = await Resource.find()
       .populate('uploadedBy', 'name')
+      .populate('cohort', 'name')
+      .sort({ uploadedAt: -1 });
+    
+    res.json(resources);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get resources by cohort
+// @route   GET /api/resources/cohort/:cohortId
+// @access  Private
+const getResourcesByCohort = async (req, res) => {
+  try {
+    const resources = await Resource.find({ cohort: req.params.cohortId })
+      .populate('uploadedBy', 'name')
+      .populate('cohort', 'name')
+      .sort({ uploadedAt: -1 });
+    
+    res.json(resources);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get resources by module
+// @route   GET /api/resources/module/:module
+// @access  Private
+const getResourcesByModule = async (req, res) => {
+  try {
+    const resources = await Resource.find({ module: req.params.module })
+      .populate('uploadedBy', 'name')
+      .populate('cohort', 'name')
       .sort({ uploadedAt: -1 });
     
     res.json(resources);
@@ -51,7 +89,7 @@ const deleteResource = async (req, res) => {
       return res.status(401).json({ message: 'User not authorized' });
     }
     
-    await resource.remove();
+    await resource.deleteOne();
     
     res.json({ message: 'Resource removed' });
   } catch (error) {
@@ -62,5 +100,7 @@ const deleteResource = async (req, res) => {
 module.exports = {
   createResource,
   getResources,
+  getResourcesByCohort,
+  getResourcesByModule,
   deleteResource
 };

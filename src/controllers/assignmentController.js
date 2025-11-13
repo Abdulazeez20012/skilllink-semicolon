@@ -8,7 +8,7 @@ const Submission = require('../models/Submission');
 // @access  Private/Facilitator
 const createAssignment = async (req, res) => {
   try {
-    const { title, description, dueDate, resources, cohort, rubric } = req.body;
+    const { title, description, dueDate, resources, cohort, module, tags, rubric } = req.body;
     
     // Create assignment
     const assignment = await Assignment.create({
@@ -16,8 +16,10 @@ const createAssignment = async (req, res) => {
       description,
       dueDate,
       resources,
-      cohort, // Add cohort field
-      rubric, // Add rubric field
+      cohort,
+      module,
+      tags,
+      rubric,
       createdBy: req.user._id
     });
     
@@ -45,6 +47,23 @@ const getAssignments = async (req, res) => {
   try {
     const assignments = await Assignment.find()
       .populate('createdBy', 'name')
+      .populate('cohort', 'name')
+      .sort({ createdAt: -1 });
+    
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get assignments by cohort
+// @route   GET /api/assignments/cohort/:cohortId
+// @access  Private
+const getAssignmentsByCohort = async (req, res) => {
+  try {
+    const assignments = await Assignment.find({ cohort: req.params.cohortId })
+      .populate('createdBy', 'name')
+      .populate('cohort', 'name')
       .sort({ createdAt: -1 });
     
     res.json(assignments);
@@ -59,7 +78,8 @@ const getAssignments = async (req, res) => {
 const getAssignmentById = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id)
-      .populate('createdBy', 'name');
+      .populate('createdBy', 'name')
+      .populate('cohort', 'name');
     
     if (!assignment) {
       return res.status(404).json({ message: 'Assignment not found' });
@@ -76,7 +96,7 @@ const getAssignmentById = async (req, res) => {
 // @access  Private/Facilitator
 const updateAssignment = async (req, res) => {
   try {
-    const { title, description, dueDate, resources, rubric } = req.body;
+    const { title, description, dueDate, resources, module, tags, rubric } = req.body;
     
     const assignment = await Assignment.findById(req.params.id);
     
@@ -93,6 +113,8 @@ const updateAssignment = async (req, res) => {
     assignment.description = description || assignment.description;
     assignment.dueDate = dueDate || assignment.dueDate;
     assignment.resources = resources || assignment.resources;
+    assignment.module = module || assignment.module;
+    assignment.tags = tags || assignment.tags;
     assignment.rubric = rubric || assignment.rubric;
     
     const updatedAssignment = await assignment.save();
@@ -119,7 +141,7 @@ const deleteAssignment = async (req, res) => {
       return res.status(401).json({ message: 'User not authorized' });
     }
     
-    await assignment.remove();
+    await assignment.deleteOne();
     
     // Also delete the discussion thread
     await Discussion.deleteMany({ assignmentId: req.params.id });
@@ -160,6 +182,7 @@ const getSubmissionsForAssignment = async (req, res) => {
 module.exports = {
   createAssignment,
   getAssignments,
+  getAssignmentsByCohort,
   getAssignmentById,
   updateAssignment,
   deleteAssignment,

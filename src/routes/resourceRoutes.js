@@ -1,5 +1,5 @@
 const express = require('express');
-const { createResource, getResources, deleteResource } = require('../controllers/resourceController');
+const { createResource, getResources, getResourcesByCohort, getResourcesByModule, deleteResource } = require('../controllers/resourceController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
@@ -12,6 +12,12 @@ router.use(authMiddleware);
 router.route('/')
   .post(roleMiddleware('facilitator'), createResource)
   .get(getResources);
+
+router.route('/cohort/:cohortId')
+  .get(getResourcesByCohort);
+
+router.route('/module/:module')
+  .get(getResourcesByModule);
 
 router.route('/:id')
   .delete(roleMiddleware('facilitator'), deleteResource);

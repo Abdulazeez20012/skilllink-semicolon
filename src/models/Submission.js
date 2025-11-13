@@ -52,6 +52,10 @@ const submissionSchema = new mongoose.Schema({
   },
   githubReadme: {
     type: String
+  },
+  submittedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true

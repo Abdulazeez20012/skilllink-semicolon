@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Assignment, UserRole, AssignmentStatus } from '../types';
+import { Assignment, UserRole, AssignmentStatus, CohortHealthData } from '../types';
 import { realApi } from '../services/realApi';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
@@ -167,7 +167,7 @@ const DashboardPage: React.FC = () => {
   };
   
   // New state for cohort health data
-  const [cohortHealthData, setCohortHealthData] = useState<any>(null);
+  const [cohortHealthData, setCohortHealthData] = useState<CohortHealthData | null>(null);
   const [loadingHealth, setLoadingHealth] = useState<boolean>(false);
 
   // Function to fetch cohort health data

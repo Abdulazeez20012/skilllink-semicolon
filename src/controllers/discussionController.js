@@ -1,4 +1,6 @@
 const Discussion = require('../models/Discussion');
+const Assignment = require('../models/Assignment');
+const Cohort = require('../models/Cohort');
 
 // @desc    Add comment to assignment discussion
 // @route   POST /api/discussions/:assignmentId
@@ -77,8 +79,8 @@ const deleteComment = async (req, res) => {
       return res.status(401).json({ message: 'User not authorized' });
     }
     
-    // Remove comment
-    comment.remove();
+    // Remove comment using pull
+    discussion.comments.pull(req.params.commentId);
     await discussion.save();
     
     res.json({ message: 'Comment removed' });
@@ -87,8 +89,130 @@ const deleteComment = async (req, res) => {
   }
 };
 
+// @desc    Upvote a comment
+// @route   POST /api/discussions/:assignmentId/:commentId/upvote
+// @access  Private
+const upvoteComment = async (req, res) => {
+  try {
+    const discussion = await Discussion.findOne({ assignmentId: req.params.assignmentId });
+    
+    if (!discussion) {
+      return res.status(404).json({ message: 'Discussion not found for this assignment' });
+    }
+    
+    // Find comment
+    const comment = discussion.comments.id(req.params.commentId);
+    
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+    
+    // Check if user has already upvoted
+    const alreadyUpvoted = comment.upvotedBy.some(userId => userId.toString() === req.user._id.toString());
+    
+    if (alreadyUpvoted) {
+      // Remove upvote
+      comment.upvotedBy = comment.upvotedBy.filter(userId => userId.toString() !== req.user._id.toString());
+      comment.upvotes = Math.max(0, comment.upvotes - 1);
+    } else {
+      // Add upvote
+      comment.upvotedBy.push(req.user._id);
+      comment.upvotes += 1;
+    }
+    
+    await discussion.save();
+    
+    res.json({ upvotes: comment.upvotes, upvoted: !alreadyUpvoted });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark comment as accepted answer (by question author)
+// @route   POST /api/discussions/:assignmentId/:commentId/accept
+// @access  Private
+const acceptAnswer = async (req, res) => {
+  try {
+    const discussion = await Discussion.findOne({ assignmentId: req.params.assignmentId });
+    
+    if (!discussion) {
+      return res.status(404).json({ message: 'Discussion not found for this assignment' });
+    }
+    
+    // Find comment
+    const comment = discussion.comments.id(req.params.commentId);
+    
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+    
+    // Verify user is the author of the question (first comment in discussion)
+    if (discussion.comments.length === 0 || discussion.comments[0].userId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Only the question author can accept an answer' });
+    }
+    
+    // Mark comment as accepted answer
+    comment.isAcceptedAnswer = true;
+    
+    await discussion.save();
+    
+    res.json({ message: 'Answer accepted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Endorse a comment (facilitator only)
+// @route   POST /api/discussions/:assignmentId/:commentId/endorse
+// @access  Private/Facilitator
+const endorseComment = async (req, res) => {
+  try {
+    const discussion = await Discussion.findOne({ assignmentId: req.params.assignmentId });
+    
+    if (!discussion) {
+      return res.status(404).json({ message: 'Discussion not found for this assignment' });
+    }
+    
+    // Find comment
+    const comment = discussion.comments.id(req.params.commentId);
+    
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+    
+    // Verify user is a facilitator for this cohort
+    const assignment = await Assignment.findById(req.params.assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+    
+    const cohort = await Cohort.findById(assignment.cohort);
+    if (!cohort) {
+      return res.status(404).json({ message: 'Cohort not found' });
+    }
+    
+    const isFacilitator = cohort.facilitators.some(facilitator => facilitator.toString() === req.user._id.toString());
+    if (!isFacilitator) {
+      return res.status(401).json({ message: 'Only facilitators can endorse comments' });
+    }
+    
+    // Endorse comment
+    comment.isEndorsed = true;
+    comment.endorsedBy = req.user._id;
+    
+    await discussion.save();
+    
+    res.json({ message: 'Comment endorsed successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addComment,
   getComments,
-  deleteComment
+  deleteComment,
+  upvoteComment,
+  acceptAnswer,
+  endorseComment
 };

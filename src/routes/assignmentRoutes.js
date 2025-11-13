@@ -2,6 +2,7 @@ const express = require('express');
 const {
   createAssignment,
   getAssignments,
+  getAssignmentsByCohort,
   getAssignmentById,
   updateAssignment,
   deleteAssignment,
@@ -19,6 +20,9 @@ router.use(authMiddleware);
 router.route('/')
   .post(roleMiddleware('facilitator'), createAssignment)
   .get(getAssignments);
+
+router.route('/cohort/:cohortId')
+  .get(getAssignmentsByCohort);
 
 router.route('/:id')
   .get(getAssignmentById)

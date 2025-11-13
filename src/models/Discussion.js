@@ -10,6 +10,30 @@ const commentSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
+  },
+  // Upvotes for the comment
+  upvotes: {
+    type: Number,
+    default: 0
+  },
+  // Users who upvoted this comment
+  upvotedBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  // Mark as solved/accepted answer
+  isAcceptedAnswer: {
+    type: Boolean,
+    default: false
+  },
+  // Facilitator endorsement
+  isEndorsed: {
+    type: Boolean,
+    default: false
+  },
+  endorsedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true

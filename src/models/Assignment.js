@@ -26,6 +26,14 @@ const assignmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Cohort'
   },
+  module: {
+    type: String,
+    trim: true
+  },
+  tags: [{
+    type: String,
+    trim: true
+  }],
   // Rubric grading fields
   rubric: [{
     criterion: {

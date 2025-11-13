@@ -11,7 +11,9 @@ const {
   unenrollStudent,
   postAssignmentToCohort,
   getAssignmentsForCohort,
-  joinCohortByInviteCode
+  joinCohortByInviteCode,
+  getCohortHealthScore,
+  getPredictiveAlerts
 } = require('../controllers/cohortController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');

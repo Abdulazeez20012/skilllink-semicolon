@@ -141,7 +141,7 @@ const deleteCohort = async (req, res) => {
       return res.status(404).json({ message: 'Cohort not found' });
     }
     
-    await cohort.remove();
+    await cohort.deleteOne();
     
     // Remove cohort reference from all users
     await User.updateMany(

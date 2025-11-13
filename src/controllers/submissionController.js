@@ -233,7 +233,7 @@ const deleteSubmission = async (req, res) => {
       return res.status(400).json({ message: 'Cannot delete submission after due date' });
     }
     
-    await submission.remove();
+    await submission.deleteOne();
     
     res.json({ message: 'Submission removed' });
   } catch (error) {

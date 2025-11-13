@@ -10,20 +10,27 @@ import ResourcesIcon from '../icons/ResourcesIcon';
 import UserIcon from '../icons/UserIcon';
 import { ROUTES } from '../../constants';
 import { useAuth } from '../../hooks/useAuth';
+import { UserRole } from '../../types';
+import ChartIcon from '../icons/ChartIcon';
 
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
 }
 
-const navLinks = [
+const baseNavLinks = [
   { to: ROUTES.DASHBOARD, icon: DashboardIcon, label: 'Dashboard' },
   { to: ROUTES.ASSIGNMENTS, icon: AssignmentsIcon, label: 'Assignments' },
   { to: ROUTES.COHORTS, icon: CohortsIcon, label: 'Cohorts' },
   { to: ROUTES.DISCUSSIONS, icon: DiscussionsIcon, label: 'Discussions' },
   { to: ROUTES.RESOURCES, icon: ResourcesIcon, label: 'Resources' },
-  { to: ROUTES.PROFILE, icon: UserIcon, label: 'Profile' },
 ];
+
+const adminNavLinks = [
+  { to: '/app/alerts', icon: ChartIcon, label: 'Predictive Alerts', adminOnly: true },
+];
+
+const profileLink = { to: ROUTES.PROFILE, icon: UserIcon, label: 'Profile' };
 
 const NavItem: React.FC<{ to: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; label: string }> = ({ to, icon: Icon, label }) => {
   const location = useLocation();
@@ -46,6 +53,13 @@ const NavItem: React.FC<{ to: string; icon: React.ComponentType<React.SVGProps<S
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const { user } = useAuth();
+  
+  // Build navigation links based on user role
+  const navLinks = [
+    ...baseNavLinks,
+    ...(user?.role === UserRole.ADMIN ? adminNavLinks : []),
+    profileLink
+  ];
   
   return (
     <>

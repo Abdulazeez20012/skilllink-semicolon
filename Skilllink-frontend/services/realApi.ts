@@ -1,4 +1,4 @@
-import { User, UserRole, Assignment, Submission, Resource, DiscussionMessage, Cohort, AssignmentStatus, ResourceType, CurriculumItem, RubricCriterion, RubricScore } from '../types';
+import { User, UserRole, Assignment, Submission, Resource, DiscussionMessage, Cohort, AssignmentStatus, ResourceType, CurriculumItem, RubricCriterion, RubricScore, CohortHealthData, PredictiveAlertsData } from '../types';
 import { getUserAvatar, getCohortImage } from '../images';
 
 // Get API base URL from environment variables
@@ -18,36 +18,6 @@ const handleResponse = async (response: Response) => {
   }
   return data;
 };
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface AttendanceRecord {
-  id: string;
-  sessionDate: string;
-  students: {
-    student: {
-      id: string;
-      name: string;
-      email: string;
-    };
-    timestamp: string;
-  }[];
-}
-
-export interface StudentAttendance {
-  totalSessions: number;
-  attendedSessions: number;
-  attendancePercentage: number;
-  currentStreak: number;
-  longestStreak: number;
-  records: {
-    sessionDate: string;
-    attended: boolean;
-  }[];
-}
 
 export const realApi = {
   // Authentication
@@ -307,11 +277,17 @@ export const realApi = {
       },
       resources: [], // Will be populated when getting resources
       cohortId: assignment.cohort || '',
+      rubric: assignment.rubric ? assignment.rubric.map((criterion: any, index: number) => ({
+        id: `${assignment._id}-criterion-${index}`,
+        criterion: criterion.criterion,
+        description: criterion.description,
+        maxPoints: criterion.maxPoints
+      })) : undefined
     }));
   },
 
   getAssignmentsByCohort: async (cohortId: string, token: string): Promise<Assignment[]> => {
-    const response = await fetch(`${API_BASE_URL}/cohorts/${cohortId}/assignments`, {
+    const response = await fetch(`${API_BASE_URL}/assignments/cohort/${cohortId}`, {
       method: 'GET',
       headers: getAuthHeaders(token),
     });
@@ -333,6 +309,12 @@ export const realApi = {
       },
       resources: [], // Will be populated when getting resources
       cohortId: cohortId,
+      rubric: assignment.rubric ? assignment.rubric.map((criterion: any, index: number) => ({
+        id: `${assignment._id}-criterion-${index}`,
+        criterion: criterion.criterion,
+        description: criterion.description,
+        maxPoints: criterion.maxPoints
+      })) : undefined
     }));
   },
 
@@ -359,10 +341,16 @@ export const realApi = {
       },
       resources: [], // Will be populated when getting resources
       cohortId: data.cohort || '',
+      rubric: data.rubric ? data.rubric.map((criterion: any, index: number) => ({
+        id: `${data._id}-criterion-${index}`,
+        criterion: criterion.criterion,
+        description: criterion.description,
+        maxPoints: criterion.maxPoints
+      })) : undefined
     };
   },
 
-  createAssignment: async (data: Omit<Assignment, 'id' | 'status' | 'facilitator' | 'resources'>, token: string): Promise<Assignment> => {
+  createAssignment: async (data: Omit<Assignment, 'id' | 'status' | 'facilitator' | 'resources' | 'rubric'> & { rubric?: RubricCriterion[] }, token: string): Promise<Assignment> => {
     const response = await fetch(`${API_BASE_URL}/assignments`, {
       method: 'POST',
       headers: getAuthHeaders(token),
@@ -371,6 +359,11 @@ export const realApi = {
         description: data.description,
         dueDate: data.dueDate,
         cohort: data.cohortId,
+        rubric: data.rubric ? data.rubric.map(criterion => ({
+          criterion: criterion.criterion,
+          description: criterion.description,
+          maxPoints: criterion.maxPoints
+        })) : undefined
       }),
     });
     
@@ -391,10 +384,16 @@ export const realApi = {
       },
       resources: [],
       cohortId: assignmentData.cohort || '',
+      rubric: assignmentData.rubric ? assignmentData.rubric.map((criterion: any, index: number) => ({
+        id: `${assignmentData._id}-criterion-${index}`,
+        criterion: criterion.criterion,
+        description: criterion.description,
+        maxPoints: criterion.maxPoints
+      })) : undefined
     };
   },
 
-  createAssignmentForCohort: async (cohortId: string, data: Pick<Assignment, 'title' | 'description' | 'dueDate' | 'resources'>, token: string): Promise<Assignment> => {
+  createAssignmentForCohort: async (cohortId: string, data: Pick<Assignment, 'title' | 'description' | 'dueDate' | 'resources'> & { rubric?: RubricCriterion[] }, token: string): Promise<Assignment> => {
     const response = await fetch(`${API_BASE_URL}/cohorts/${cohortId}/assignments`, {
       method: 'POST',
       headers: getAuthHeaders(token),
@@ -403,6 +402,11 @@ export const realApi = {
         description: data.description,
         dueDate: data.dueDate,
         resources: data.resources,
+        rubric: data.rubric ? data.rubric.map(criterion => ({
+          criterion: criterion.criterion,
+          description: criterion.description,
+          maxPoints: criterion.maxPoints
+        })) : undefined
       }),
     });
     
@@ -422,10 +426,16 @@ export const realApi = {
       },
       resources: [],
       cohortId: cohortId,
+      rubric: assignmentData.rubric ? assignmentData.rubric.map((criterion: any, index: number) => ({
+        id: `${assignmentData._id}-criterion-${index}`,
+        criterion: criterion.criterion,
+        description: criterion.description,
+        maxPoints: criterion.maxPoints
+      })) : undefined
     };
   },
 
-  updateAssignment: async (id: string, data: Partial<Omit<Assignment, 'id' | 'status' | 'facilitator' | 'resources'>>, token: string): Promise<Assignment> => {
+  updateAssignment: async (id: string, data: Partial<Omit<Assignment, 'id' | 'status' | 'facilitator' | 'resources' | 'rubric'>> & { rubric?: RubricCriterion[] }, token: string): Promise<Assignment> => {
     const response = await fetch(`${API_BASE_URL}/assignments/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(token),
@@ -434,6 +444,11 @@ export const realApi = {
         description: data.description,
         dueDate: data.dueDate,
         cohort: data.cohortId,
+        rubric: data.rubric ? data.rubric.map(criterion => ({
+          criterion: criterion.criterion,
+          description: criterion.description,
+          maxPoints: criterion.maxPoints
+        })) : undefined
       }),
     });
     
@@ -491,6 +506,7 @@ export const realApi = {
       feedback: submission.feedback,
       projectLink: submission.projectLink,
       fileUrl: submission.fileUpload,
+      rubricScores: submission.rubricScores,
       status: submission.grade !== undefined && submission.grade !== null 
         ? AssignmentStatus.GRADED 
         : submission.projectLink || submission.fileUpload 
@@ -524,6 +540,7 @@ export const realApi = {
       feedback: data.feedback,
       projectLink: data.projectLink,
       fileUrl: data.fileUpload,
+      rubricScores: data.rubricScores,
       // GitHub integration fields
       githubRepoUrl: data.githubRepoUrl,
       githubCommitMessage: data.githubCommitMessage,
@@ -577,8 +594,44 @@ export const realApi = {
     return data.map((resource: any) => ({
       id: resource._id,
       title: resource.title,
-      description: resource.link,
-      type: ResourceType.LINK, // Default to LINK, could be enhanced
+      description: resource.description,
+      type: resource.type as ResourceType,
+      url: resource.link,
+    }));
+  },
+
+  getResourcesByCohort: async (cohortId: string, token: string): Promise<Resource[]> => {
+    const response = await fetch(`${API_BASE_URL}/resources/cohort/${cohortId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    
+    // Transform backend resource data to frontend resource data structure
+    return data.map((resource: any) => ({
+      id: resource._id,
+      title: resource.title,
+      description: resource.description,
+      type: resource.type as ResourceType,
+      url: resource.link,
+    }));
+  },
+
+  getResourcesByModule: async (module: string, token: string): Promise<Resource[]> => {
+    const response = await fetch(`${API_BASE_URL}/resources/module/${module}`, {
+      method: 'GET',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    
+    // Transform backend resource data to frontend resource data structure
+    return data.map((resource: any) => ({
+      id: resource._id,
+      title: resource.title,
+      description: resource.description,
+      type: resource.type as ResourceType,
       url: resource.link,
     }));
   },
@@ -589,7 +642,9 @@ export const realApi = {
       headers: getAuthHeaders(token),
       body: JSON.stringify({
         title: data.title,
+        description: data.description,
         link: data.url,
+        type: data.type,
       }),
     });
     
@@ -599,8 +654,8 @@ export const realApi = {
     return {
       id: resourceData._id,
       title: resourceData.title,
-      description: resourceData.link,
-      type: ResourceType.LINK, // Default to LINK, could be enhanced
+      description: resourceData.description,
+      type: resourceData.type as ResourceType,
       url: resourceData.link,
     };
   },
@@ -662,6 +717,37 @@ export const realApi = {
     await handleResponse(response);
   },
 
+  // Q&A Forum features
+  upvoteDiscussionMessage: async (assignmentId: string, messageId: string, token: string): Promise<{ upvotes: number; upvoted: boolean }> => {
+    const response = await fetch(`${API_BASE_URL}/discussions/${assignmentId}/${messageId}/upvote`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    return data;
+  },
+
+  acceptDiscussionAnswer: async (assignmentId: string, messageId: string, token: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/discussions/${assignmentId}/${messageId}/accept`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    return data;
+  },
+
+  endorseDiscussionMessage: async (assignmentId: string, messageId: string, token: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/discussions/${assignmentId}/${messageId}/endorse`, {
+      method: 'POST',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    return data;
+  },
+
   // User profile
   updateUserProfile: async (user: User, updates: Partial<Pick<User, 'name' | 'email' | 'avatarUrl'>>, token: string): Promise<User> => {
     const response = await fetch(`${API_BASE_URL}/auth/profile`, {
@@ -708,22 +794,44 @@ export const realApi = {
   },
 
   // Attendance
-  generateQRCode: async (cohortId: string, token: string): Promise<{ qrCodeId: string; qrCodeImage: string; sessionDate: string }> => {
+  generateQRCode: async (
+    cohortId: string, 
+    token: string, 
+    geofenceEnabled?: boolean, 
+    geofenceCoordinates?: { latitude: number; longitude: number; radius: number }
+  ): Promise<{ qrCodeId: string; qrCodeImage: string; sessionDate: string }> => {
+    const body: any = { cohortId };
+    
+    if (geofenceEnabled && geofenceCoordinates) {
+      body.geofenceEnabled = true;
+      body.geofenceCoordinates = geofenceCoordinates;
+    }
+    
     const response = await fetch(`${API_BASE_URL}/attendance/generate`, {
       method: 'POST',
       headers: getAuthHeaders(token),
-      body: JSON.stringify({ cohortId }),
+      body: JSON.stringify(body),
     });
     
     const data = await handleResponse(response);
     return data;
   },
 
-  markAttendance: async (qrCodeId: string, token: string): Promise<{ message: string; currentStreak: number; longestStreak: number }> => {
+  markAttendance: async (
+    qrCodeId: string, 
+    token: string, 
+    studentLocation?: { studentLat: number; studentLon: number }
+  ): Promise<{ message: string; currentStreak: number; longestStreak: number }> => {
+    const body: any = { qrCodeId };
+    
+    if (studentLocation) {
+      body.studentLocation = studentLocation;
+    }
+    
     const response = await fetch(`${API_BASE_URL}/attendance/mark`, {
       method: 'POST',
       headers: getAuthHeaders(token),
-      body: JSON.stringify({ qrCodeId }),
+      body: JSON.stringify(body),
     });
     
     const data = await handleResponse(response);
@@ -750,6 +858,7 @@ export const realApi = {
         },
         timestamp: s.timestamp,
       })),
+      geofenceEnabled: record.geofenceEnabled || false,
     }));
   },
 
@@ -763,4 +872,56 @@ export const realApi = {
     return data;
   },
 
+  // Admin features
+  getCohortHealthScore: async (cohortId: string, token: string): Promise<CohortHealthData> => {
+    const response = await fetch(`${API_BASE_URL}/cohorts/${cohortId}/health`, {
+      method: 'GET',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    return data;
+  },
+
+  getPredictiveAlerts: async (cohortId: string, token: string): Promise<PredictiveAlertsData> => {
+    const response = await fetch(`${API_BASE_URL}/cohorts/${cohortId}/alerts`, {
+      method: 'GET',
+      headers: getAuthHeaders(token),
+    });
+    
+    const data = await handleResponse(response);
+    return data;
+  },
+
 };
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  sessionDate: string;
+  students: {
+    student: {
+      id: string;
+      name: string;
+      email: string;
+    };
+    timestamp: string;
+  }[];
+  geofenceEnabled?: boolean;
+}
+
+export interface StudentAttendance {
+  totalSessions: number;
+  attendedSessions: number;
+  attendancePercentage: number;
+  currentStreak: number;
+  longestStreak: number;
+  records: {
+    sessionDate: string;
+    attended: boolean;
+  }[];
+}

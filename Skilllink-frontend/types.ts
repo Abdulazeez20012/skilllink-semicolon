@@ -12,6 +12,9 @@ export interface User {
   avatarUrl: string;
   joinDate: string;
   cohorts: string[]; // Array of cohort IDs
+  // Attendance streak tracking
+  currentStreak?: number;
+  longestStreak?: number;
 }
 
 export enum AssignmentStatus {
@@ -44,6 +47,9 @@ export interface Assignment {
   resources: Resource[];
   cohortId: string;
   rubric?: RubricCriterion[];
+  // Additional fields
+  module?: string;
+  tags?: string[];
 }
 
 export interface Submission {
@@ -69,6 +75,10 @@ export interface DiscussionMessage {
   user: Pick<User, 'id' | 'name' | 'avatarUrl'>;
   content: string;
   timestamp: string;
+  // Q&A Forum features
+  upvotes?: number;
+  isAcceptedAnswer?: boolean;
+  isEndorsed?: boolean;
 }
 
 export enum ResourceType {
@@ -84,6 +94,10 @@ export interface Resource {
     description: string;
     type: ResourceType;
     url: string;
+    // Additional fields
+    cohortId?: string;
+    module?: string;
+    tags?: string[];
 }
 
 export interface CurriculumItem {
@@ -115,4 +129,62 @@ export interface Cohort {
   curriculumTrack?: string;
   curriculum?: CurriculumItem[];
   inviteCode?: string;
+  // Additional fields for enhanced cohort management
+  programmingLanguage?: string;
+}
+
+// Admin dashboard types
+export interface CohortHealthData {
+  cohortId: string;
+  cohortName: string;
+  healthScore: number;
+  healthStatus: string;
+  metrics: {
+    attendance: {
+      score: number;
+      weight: string;
+    };
+    completion: {
+      score: number;
+      weight: string;
+    };
+    forumActivity: {
+      score: number;
+      weight: string;
+    };
+  };
+  statistics: {
+    totalStudents: number;
+    totalSessions: number;
+    totalAssignments: number;
+    totalSubmissions: number;
+    totalComments: number;
+  };
+}
+
+export interface StudentRiskAlert {
+  student: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  riskScore: number;
+  alertLevel: 'low' | 'medium' | 'high';
+  riskFactors: {
+    type: string;
+    message: string;
+    severity: 'low' | 'medium' | 'high';
+  }[];
+  streak: {
+    current: number;
+    longest: number;
+  };
+}
+
+export interface PredictiveAlertsData {
+  cohortId: string;
+  cohortName: string;
+  totalStudents: number;
+  atRiskStudents: number;
+  alerts: StudentRiskAlert[];
 }
