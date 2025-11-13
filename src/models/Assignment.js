@@ -25,7 +25,22 @@ const assignmentSchema = new mongoose.Schema({
   cohort: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Cohort'
-  }
+  },
+  // Rubric grading fields
+  rubric: [{
+    criterion: {
+      type: String,
+      required: true
+    },
+    description: {
+      type: String
+    },
+    maxPoints: {
+      type: Number,
+      required: true,
+      min: 1
+    }
+  }]
 }, {
   timestamps: true
 });

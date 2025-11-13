@@ -13,6 +13,31 @@ const AttendancePage: React.FC = () => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [qrCodeImage, setQrCodeImage] = useState('');
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  // Get user's current location for geofencing
+  useEffect(() => {
+    if (user?.role === 'student') {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLocation({
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            });
+            setLocationError(null);
+          },
+          (error) => {
+            setLocationError('Unable to get your location. Some attendance features may not work.');
+            console.error('Geolocation error:', error);
+          }
+        );
+      } else {
+        setLocationError('Geolocation is not supported by your browser.');
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     const markAttendance = async () => {
@@ -25,7 +50,13 @@ const AttendancePage: React.FC = () => {
           throw new Error('No authentication token found');
         }
         
-        const result = await realApi.markAttendance(qrCodeId, token);
+        // Prepare student location data if available
+        const studentLocation = location ? {
+          studentLat: location.lat,
+          studentLon: location.lon
+        } : undefined;
+        
+        const result = await realApi.markAttendance(qrCodeId, token, studentLocation);
         showToast(result.message, 'success');
       } catch (error: any) {
         console.error('Failed to mark attendance', error);
@@ -38,7 +69,7 @@ const AttendancePage: React.FC = () => {
     if (user?.role === 'student') {
       markAttendance();
     }
-  }, [qrCodeId, user, showToast]);
+  }, [qrCodeId, user, showToast, location]);
 
   useEffect(() => {
     const generateQRCode = async () => {
@@ -84,6 +115,11 @@ const AttendancePage: React.FC = () => {
           <div>
             <p className="text-xl mb-4">Attendance marked successfully!</p>
             <p className="text-neutral-gray-light">You can now close this page.</p>
+            {locationError && (
+              <div className="mt-4 p-3 bg-yellow-50 text-yellow-800 rounded">
+                <p className="text-sm">{locationError}</p>
+              </div>
+            )}
           </div>
         ) : (
           <div>

@@ -35,6 +35,10 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Cohort'
   },
+  cohorts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Cohort'
+  }],
   // Attendance streak tracking
   currentStreak: {
     type: Number,

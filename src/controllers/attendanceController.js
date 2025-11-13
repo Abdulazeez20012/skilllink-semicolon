@@ -20,12 +20,28 @@ const areConsecutiveDays = (date1, date2) => {
   return diffDays === 1;
 };
 
-// @desc    Generate QR code for attendance
+// Helper function to calculate distance between two GPS coordinates (Haversine formula)
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371e3; // Earth radius in meters
+  const φ1 = lat1 * Math.PI/180;
+  const φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180;
+  const Δλ = (lon2-lon1) * Math.PI/180;
+
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R * c;
+};
+
+// @desc    Generate QR code for attendance (with optional geofencing)
 // @route   POST /api/attendance/generate
 // @access  Private/Facilitator
 const generateQRCode = async (req, res) => {
   try {
-    const { cohortId } = req.body;
+    const { cohortId, geofenceEnabled, geofenceCoordinates } = req.body;
     
     // Check if cohort exists
     const cohort = await Cohort.findById(cohortId);
@@ -41,12 +57,24 @@ const generateQRCode = async (req, res) => {
     // Generate unique QR code identifier
     const qrCodeId = crypto.randomBytes(16).toString('hex');
     
-    // Create attendance record
-    const attendance = await Attendance.create({
+    // Create attendance record with optional geofencing
+    const attendanceData = {
       cohort: cohortId,
       sessionDate: new Date(),
       qrCode: qrCodeId
-    });
+    };
+    
+    // Add geofencing data if enabled
+    if (geofenceEnabled && geofenceCoordinates) {
+      attendanceData.geofenceEnabled = true;
+      attendanceData.geofenceCoordinates = {
+        latitude: geofenceCoordinates.latitude,
+        longitude: geofenceCoordinates.longitude,
+        radius: geofenceCoordinates.radius
+      };
+    }
+    
+    const attendance = await Attendance.create(attendanceData);
     
     // Generate QR code image
     const qrCodeData = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/attendance/${qrCodeId}`;
@@ -55,19 +83,21 @@ const generateQRCode = async (req, res) => {
     res.status(201).json({
       qrCodeId,
       qrCodeImage,
-      sessionDate: attendance.sessionDate
+      sessionDate: attendance.sessionDate,
+      geofenceEnabled: attendance.geofenceEnabled,
+      geofenceCoordinates: attendance.geofenceCoordinates
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Mark attendance using QR code
+// @desc    Mark attendance using QR code (with geofencing support)
 // @route   POST /api/attendance/mark
 // @access  Private/Student
 const markAttendance = async (req, res) => {
   try {
-    const { qrCodeId } = req.body;
+    const { qrCodeId, studentLocation } = req.body;
     
     // Find attendance record by QR code
     const attendance = await Attendance.findOne({ qrCode: qrCodeId });
@@ -85,6 +115,26 @@ const markAttendance = async (req, res) => {
     const alreadyMarked = attendance.students.find(s => s.student.toString() === req.user._id.toString());
     if (alreadyMarked) {
       return res.status(400).json({ message: 'Attendance already marked' });
+    }
+    
+    // If geofencing is enabled, validate student location
+    if (attendance.geofenceEnabled && attendance.geofenceCoordinates && studentLocation) {
+      const { latitude, longitude } = attendance.geofenceCoordinates;
+      const { studentLat, studentLon } = studentLocation;
+      
+      // Calculate distance between student and geofence center
+      const distance = calculateDistance(latitude, longitude, studentLat, studentLon);
+      
+      // Check if student is within the geofence radius
+      if (distance > attendance.geofenceCoordinates.radius) {
+        return res.status(400).json({ 
+          message: 'You are not within the required location to mark attendance',
+          distance: Math.round(distance),
+          requiredRadius: attendance.geofenceCoordinates.radius
+        });
+      }
+    } else if (attendance.geofenceEnabled && !studentLocation) {
+      return res.status(400).json({ message: 'Location is required for this attendance session' });
     }
     
     // Add student to attendance record
@@ -207,7 +257,8 @@ const getStudentAttendance = async (req, res) => {
       longestStreak: student.longestStreak,
       records: attendanceRecords.map(record => ({
         sessionDate: record.sessionDate,
-        attended: record.students.some(s => s.student.toString() === req.user._id.toString())
+        attended: record.students.some(s => s.student.toString() === req.user._id.toString()),
+        geofenceEnabled: record.geofenceEnabled
       }))
     });
   } catch (error) {

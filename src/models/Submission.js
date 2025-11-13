@@ -26,6 +26,20 @@ const submissionSchema = new mongoose.Schema({
   feedback: {
     type: String
   },
+  // Rubric-based grading fields
+  rubricScores: [{
+    criterionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true
+    },
+    points: {
+      type: Number,
+      required: true
+    },
+    feedback: {
+      type: String
+    }
+  }],
   // GitHub integration fields
   githubRepoUrl: {
     type: String

@@ -59,4 +59,12 @@ router.route('/:id/assignments')
   .post(roleMiddleware('facilitator'), postAssignmentToCohort)
   .get(getAssignmentsForCohort);
 
+// Admin route for cohort health score
+router.route('/:id/health')
+  .get(roleMiddleware('admin'), getCohortHealthScore);
+
+// Admin route for predictive alerts
+router.route('/:id/alerts')
+  .get(roleMiddleware('admin'), getPredictiveAlerts);
+
 module.exports = router;

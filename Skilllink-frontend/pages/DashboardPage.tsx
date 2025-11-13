@@ -166,6 +166,30 @@ const DashboardPage: React.FC = () => {
       );
   };
   
+  // New state for cohort health data
+  const [cohortHealthData, setCohortHealthData] = useState<any>(null);
+  const [loadingHealth, setLoadingHealth] = useState<boolean>(false);
+
+  // Function to fetch cohort health data
+  const fetchCohortHealth = async (cohortId: string) => {
+    if (!user) return;
+    
+    try {
+      setLoadingHealth(true);
+      const token = localStorage.getItem('skilllink_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const healthData = await realApi.getCohortHealthScore(cohortId, token);
+      setCohortHealthData(healthData);
+    } catch (error) {
+      console.error('Failed to fetch cohort health data', error);
+    } finally {
+      setLoadingHealth(false);
+    }
+  };
+
   const AdminDashboard = () => {
     // Calculate analytics
     const totalStudents = cohorts.reduce((sum, cohort) => sum + cohort.students.length, 0);
@@ -188,67 +212,192 @@ const DashboardPage: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Cohort Health Score Visualization */}
               <Card className="p-6">
-                <h3 className="text-2xl font-bold font-heading mb-6">Cohort Distribution</h3>
-                <div className="space-y-4">
-                  {cohorts.map((cohort, index) => (
-                    <div key={cohort.id} className="opacity-0 animate-fade-in-up" style={{ animationDelay: `${100 + index * 50}ms`}}>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold font-heading">Cohort Health Overview</h3>
+                  <select 
+                    onChange={(e) => fetchCohortHealth(e.target.value)}
+                    className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+                  >
+                    <option value="">Select a cohort</option>
+                    {cohorts.map(cohort => (
+                      <option key={cohort.id} value={cohort.id}>{cohort.name}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {loadingHealth ? (
+                  <div className="flex justify-center items-center h-40">
+                    <Spinner size="lg" />
+                  </div>
+                ) : cohortHealthData ? (
+                  <div className="space-y-6">
+                    {/* Health Score Visualization */}
+                    <div className="text-center">
+                      <div className="relative inline-block">
+                        <svg className="w-32 h-32">
+                          <circle
+                            className="text-gray-200"
+                            strokeWidth="8"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="50"
+                            cx="64"
+                            cy="64"
+                          />
+                          <circle
+                            className={`${
+                              cohortHealthData.healthScore >= 75 
+                                ? 'text-green-500' 
+                                : cohortHealthData.healthScore >= 50 
+                                  ? 'text-yellow-500' 
+                                  : 'text-red-500'
+                            }`}
+                            strokeWidth="8"
+                            strokeLinecap="round"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="50"
+                            cx="64"
+                            cy="64"
+                            strokeDasharray={`${cohortHealthData.healthScore} ${100 - cohortHealthData.healthScore}`}
+                            strokeDashoffset="25"
+                            transform="rotate(-90 64 64)"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-2xl font-bold">{cohortHealthData.healthScore}</span>
+                          <span className="text-sm text-gray-500">Score</span>
+                        </div>
+                      </div>
+                      <p className={`mt-2 font-semibold ${
+                        cohortHealthData.healthStatus === 'Healthy' 
+                          ? 'text-green-600' 
+                          : cohortHealthData.healthStatus === 'Needs Attention' 
+                            ? 'text-yellow-600' 
+                            : 'text-red-600'
+                      }`}>
+                        {cohortHealthData.healthStatus}
+                      </p>
+                    </div>
+                    
+                    {/* Metrics Breakdown */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <p className="text-lg font-bold">{cohortHealthData.metrics.attendance.score}%</p>
+                        <p className="text-xs text-gray-600">Attendance</p>
+                        <p className="text-xs text-gray-500">{cohortHealthData.metrics.attendance.weight}</p>
+                      </div>
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <p className="text-lg font-bold">{cohortHealthData.metrics.completion.score}%</p>
+                        <p className="text-xs text-gray-600">Completion</p>
+                        <p className="text-xs text-gray-500">{cohortHealthData.metrics.completion.weight}</p>
+                      </div>
+                      <div className="text-center p-3 bg-purple-50 rounded-lg">
+                        <p className="text-lg font-bold">{cohortHealthData.metrics.forumActivity.score}%</p>
+                        <p className="text-xs text-gray-600">Forum Activity</p>
+                        <p className="text-xs text-gray-500">{cohortHealthData.metrics.forumActivity.weight}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Statistics */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <h4 className="font-medium mb-2">Statistics</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Students:</span>
+                          <span className="font-medium">{cohortHealthData.statistics.totalStudents}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sessions:</span>
+                          <span className="font-medium">{cohortHealthData.statistics.totalSessions}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Assignments:</span>
+                          <span className="font-medium">{cohortHealthData.statistics.totalAssignments}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Submissions:</span>
+                          <span className="font-medium">{cohortHealthData.statistics.totalSubmissions}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Comments:</span>
+                          <span className="font-medium">{cohortHealthData.statistics.totalComments}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Select a cohort to view health metrics</p>
+                  </div>
+                )}
+              </Card>
+              
+              <div>
+                <Card className="p-6">
+                  <h3 className="text-2xl font-bold font-heading mb-6">Cohort Distribution</h3>
+                  <div className="space-y-4">
+                    {cohorts.map((cohort, index) => (
+                      <div key={cohort.id} className="opacity-0 animate-fade-in-up" style={{ animationDelay: `${100 + index * 50}ms`}}>
+                        <div className="flex justify-between mb-1">
+                          <span className="font-medium">{cohort.name}</span>
+                          <span className="text-sm">{cohort.students.length} students</span>
+                        </div>
+                        <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full" 
+                            style={{ width: `${Math.min(100, (cohort.students.length / 50) * 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+                
+                <Card className="p-6 mt-8">
+                  <h3 className="text-2xl font-bold font-heading mb-6">Assignment Status</h3>
+                  <div className="space-y-4">
+                    <div>
                       <div className="flex justify-between mb-1">
-                        <span className="font-medium">{cohort.name}</span>
-                        <span className="text-sm">{cohort.students.length} students</span>
+                        <span className="font-medium">Pending</span>
+                        <span className="text-sm">{pendingAssignments}</span>
                       </div>
                       <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
                         <div 
-                          className="bg-primary h-2 rounded-full" 
-                          style={{ width: `${Math.min(100, (cohort.students.length / 50) * 100)}%` }}
+                          className="bg-yellow-500 h-2 rounded-full" 
+                          style={{ width: `${(pendingAssignments / Math.max(1, totalAssignments)) * 100}%` }}
                         ></div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </Card>
-              
-              <Card className="p-6">
-                <h3 className="text-2xl font-bold font-heading mb-6">Assignment Status</h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="font-medium">Pending</span>
-                      <span className="text-sm">{pendingAssignments}</span>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium">Submitted</span>
+                        <span className="text-sm">{submittedAssignments}</span>
+                      </div>
+                      <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
+                        <div 
+                          className="bg-blue-500 h-2 rounded-full" 
+                          style={{ width: `${(submittedAssignments / Math.max(1, totalAssignments)) * 100}%` }}
+                        ></div>
+                      </div>
                     </div>
-                    <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
-                      <div 
-                        className="bg-yellow-500 h-2 rounded-full" 
-                        style={{ width: `${(pendingAssignments / Math.max(1, totalAssignments)) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="font-medium">Submitted</span>
-                      <span className="text-sm">{submittedAssignments}</span>
-                    </div>
-                    <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
-                      <div 
-                        className="bg-blue-500 h-2 rounded-full" 
-                        style={{ width: `${(submittedAssignments / Math.max(1, totalAssignments)) * 100}%` }}
-                      ></div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium">Graded</span>
+                        <span className="text-sm">{gradedAssignments}</span>
+                      </div>
+                      <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
+                        <div 
+                          className="bg-green-500 h-2 rounded-full" 
+                          style={{ width: `${(gradedAssignments / Math.max(1, totalAssignments)) * 100}%` }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="font-medium">Graded</span>
-                      <span className="text-sm">{gradedAssignments}</span>
-                    </div>
-                    <div className="w-full bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-full h-2">
-                      <div 
-                        className="bg-green-500 h-2 rounded-full" 
-                        style={{ width: `${(gradedAssignments / Math.max(1, totalAssignments)) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </div>
             </div>
         </div>
     );

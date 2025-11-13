@@ -8,7 +8,7 @@ const Submission = require('../models/Submission');
 // @access  Private/Facilitator
 const createAssignment = async (req, res) => {
   try {
-    const { title, description, dueDate, resources, cohort } = req.body;
+    const { title, description, dueDate, resources, cohort, rubric } = req.body;
     
     // Create assignment
     const assignment = await Assignment.create({
@@ -17,6 +17,7 @@ const createAssignment = async (req, res) => {
       dueDate,
       resources,
       cohort, // Add cohort field
+      rubric, // Add rubric field
       createdBy: req.user._id
     });
     
@@ -75,7 +76,7 @@ const getAssignmentById = async (req, res) => {
 // @access  Private/Facilitator
 const updateAssignment = async (req, res) => {
   try {
-    const { title, description, dueDate, resources } = req.body;
+    const { title, description, dueDate, resources, rubric } = req.body;
     
     const assignment = await Assignment.findById(req.params.id);
     
@@ -92,6 +93,7 @@ const updateAssignment = async (req, res) => {
     assignment.description = description || assignment.description;
     assignment.dueDate = dueDate || assignment.dueDate;
     assignment.resources = resources || assignment.resources;
+    assignment.rubric = rubric || assignment.rubric;
     
     const updatedAssignment = await assignment.save();
     

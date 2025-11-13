@@ -2,13 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { realApi } from '../services/realApi';
-import { Cohort, Assignment, UserRole, AssignmentStatus, CurriculumItem, AttendanceRecord } from '../types';
+import { Cohort, Assignment, UserRole, AssignmentStatus, CurriculumItem } from '../types';
 import Card from '../components/ui/Card';
 import Spinner from '../components/ui/Spinner';
 import Badge from '../components/ui/Badge';
 import ProgressBar from '../components/ui/ProgressBar';
 import Button from '../components/ui/Button';
 import QrCodeIcon from '../components/icons/QrCodeIcon';
+import Input from '../components/ui/Input';
+
+// Define AttendanceRecord interface locally since it's not exported from types.ts
+interface AttendanceRecord {
+  id: string;
+  sessionDate: string;
+  students: {
+    student: {
+      id: string;
+      name: string;
+      email: string;
+    };
+    timestamp: string;
+  }[];
+  geofenceEnabled?: boolean;
+}
 
 const CurriculumRoadmap: React.FC<{ curriculum: CurriculumItem[] }> = ({ curriculum }) => {
   return (
@@ -38,12 +54,100 @@ const AttendanceSection: React.FC<{
   onGenerateQR: () => void;
   attendanceRecords: AttendanceRecord[];
 }> = ({ cohortId, onGenerateQR, attendanceRecords }) => {
+  const [showGeofenceForm, setShowGeofenceForm] = useState(false);
+  const [geofenceData, setGeofenceData] = useState({
+    latitude: '',
+    longitude: '',
+    radius: '100'
+  });
+
+  const handleGeofenceSubmit = async () => {
+    if (!cohortId) return;
+    
+    try {
+      const token = localStorage.getItem('skilllink_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const result = await realApi.generateQRCode(
+        cohortId, 
+        token, 
+        true, 
+        {
+          latitude: parseFloat(geofenceData.latitude),
+          longitude: parseFloat(geofenceData.longitude),
+          radius: parseInt(geofenceData.radius)
+        }
+      );
+      
+      // In a real implementation, we would redirect to the QR code page
+      alert(`Geofenced QR Code generated! Share this link with students: ${window.location.origin}/attendance/${result.qrCodeId}`);
+      
+      // Refresh attendance records
+      const attendanceData = await realApi.getAttendanceByCohort(cohortId, token);
+      // Update attendance records in parent component if needed
+      
+      // Reset form
+      setShowGeofenceForm(false);
+      setGeofenceData({
+        latitude: '',
+        longitude: '',
+        radius: '100'
+      });
+    } catch (error: any) {
+      console.error("Failed to generate geofenced QR code", error);
+      alert(`Failed to generate geofenced QR code: ${error.message || 'Unknown error'}`);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-bold font-heading">Attendance</h3>
-        <Button onClick={onGenerateQR} leftIcon={<QrCodeIcon />}>Generate QR Code</Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowGeofenceForm(!showGeofenceForm)}
+          >
+            {showGeofenceForm ? 'Cancel Geofence' : 'Add Geofence'}
+          </Button>
+          <Button onClick={onGenerateQR} leftIcon={<QrCodeIcon />}>Generate QR Code</Button>
+        </div>
       </div>
+      
+      {showGeofenceForm && (
+        <Card className="mb-6 p-4">
+          <h4 className="font-bold mb-3">Set Geofence Location</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Input
+              type="text"
+              placeholder="Latitude"
+              value={geofenceData.latitude}
+              onChange={(e) => setGeofenceData({...geofenceData, latitude: e.target.value})}
+            />
+            <Input
+              type="text"
+              placeholder="Longitude"
+              value={geofenceData.longitude}
+              onChange={(e) => setGeofenceData({...geofenceData, longitude: e.target.value})}
+            />
+            <Input
+              type="number"
+              placeholder="Radius (meters)"
+              value={geofenceData.radius}
+              onChange={(e) => setGeofenceData({...geofenceData, radius: e.target.value})}
+            />
+          </div>
+          <Button 
+            className="mt-3" 
+            onClick={handleGeofenceSubmit}
+            disabled={!geofenceData.latitude || !geofenceData.longitude}
+          >
+            Generate Geofenced QR Code
+          </Button>
+        </Card>
+      )}
       
       {attendanceRecords.length > 0 ? (
         <div className="space-y-4">
@@ -53,9 +157,14 @@ const AttendanceSection: React.FC<{
                 <h4 className="font-bold">{new Date(record.sessionDate).toLocaleDateString()}</h4>
                 <span className="text-sm text-neutral-gray-light">{record.students.length} students</span>
               </div>
-              <div className="text-sm text-neutral-gray-light">
-                {record.students.slice(0, 5).map(s => s.student.name).join(', ')}
-                {record.students.length > 5 && ` and ${record.students.length - 5} more`}
+              <div className="flex items-center">
+                <div className="text-sm text-neutral-gray-light flex-1">
+                  {record.students.slice(0, 5).map(s => s.student.name).join(', ')}
+                  {record.students.length > 5 && ` and ${record.students.length - 5} more`}
+                </div>
+                {record.geofenceEnabled && (
+                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Geofenced</span>
+                )}
               </div>
             </Card>
           ))}

@@ -105,12 +105,12 @@ const getSubmissionsForAssignment = async (req, res) => {
   }
 };
 
-// @desc    Grade and provide feedback on submission
+// @desc    Grade and provide feedback on submission (with rubric support)
 // @route   PUT /api/submissions/:id/grade
 // @access  Private/Facilitator
 const gradeSubmission = async (req, res) => {
   try {
-    const { grade, feedback } = req.body;
+    const { grade, feedback, rubricScores } = req.body;
     
     const submission = await Submission.findById(req.params.id);
     
@@ -129,8 +129,19 @@ const gradeSubmission = async (req, res) => {
       return res.status(401).json({ message: 'User not authorized' });
     }
     
-    submission.grade = grade;
-    submission.feedback = feedback;
+    // Update grading fields
+    if (grade !== undefined) {
+      submission.grade = grade;
+    }
+    
+    if (feedback !== undefined) {
+      submission.feedback = feedback;
+    }
+    
+    // Handle rubric scores if provided
+    if (rubricScores !== undefined) {
+      submission.rubricScores = rubricScores;
+    }
     
     const updatedSubmission = await submission.save();
     

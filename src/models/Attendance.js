@@ -15,6 +15,22 @@ const attendanceSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  // Geofencing fields
+  geofenceEnabled: {
+    type: Boolean,
+    default: false
+  },
+  geofenceCoordinates: {
+    latitude: {
+      type: Number
+    },
+    longitude: {
+      type: Number
+    },
+    radius: {
+      type: Number // in meters
+    }
+  },
   students: [{
     student: {
       type: mongoose.Schema.Types.ObjectId,

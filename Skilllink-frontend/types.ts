@@ -21,6 +21,19 @@ export enum AssignmentStatus {
   LATE = 'Late',
 }
 
+export interface RubricCriterion {
+  id: string;
+  criterion: string;
+  description?: string;
+  maxPoints: number;
+}
+
+export interface RubricScore {
+  criterionId: string;
+  points: number;
+  feedback?: string;
+}
+
 export interface Assignment {
   id: string;
   title: string;
@@ -30,6 +43,7 @@ export interface Assignment {
   facilitator: Pick<User, 'id' | 'name' | 'avatarUrl'>;
   resources: Resource[];
   cohortId: string;
+  rubric?: RubricCriterion[];
 }
 
 export interface Submission {
@@ -41,6 +55,13 @@ export interface Submission {
   projectLink?: string;
   fileUrl?: string;
   status: AssignmentStatus;
+  // Rubric-based grading fields
+  rubricScores?: RubricScore[];
+  // GitHub integration fields
+  githubRepoUrl?: string;
+  githubCommitMessage?: string;
+  githubLastCommitDate?: string;
+  githubReadme?: string;
 }
 
 export interface DiscussionMessage {
@@ -69,6 +90,16 @@ export interface CurriculumItem {
   week: number;
   topics: string[];
   assignments: string[]; // Assignment IDs
+}
+
+export interface AttendanceRecord {
+  id: string;
+  sessionDate: string;
+  students: {
+    student: Pick<User, 'id' | 'name' | 'email'>;
+    timestamp: string;
+  }[];
+  geofenceEnabled?: boolean;
 }
 
 export interface Cohort {
