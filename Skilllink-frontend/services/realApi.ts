@@ -1,4 +1,4 @@
-import { User, UserRole, Assignment, Submission, Resource, DiscussionMessage, Cohort, AssignmentStatus, ResourceType, CurriculumItem } from '../types';
+import { User, UserRole, Assignment, Submission, Resource, DiscussionMessage, Cohort, AssignmentStatus, ResourceType, CurriculumItem, RubricCriterion, RubricScore } from '../types';
 import { getUserAvatar, getCohortImage } from '../images';
 
 // Get API base URL from environment variables
@@ -524,17 +524,23 @@ export const realApi = {
       feedback: data.feedback,
       projectLink: data.projectLink,
       fileUrl: data.fileUpload,
+      // GitHub integration fields
+      githubRepoUrl: data.githubRepoUrl,
+      githubCommitMessage: data.githubCommitMessage,
+      githubLastCommitDate: data.githubLastCommitDate,
+      githubReadme: data.githubReadme,
       status: AssignmentStatus.SUBMITTED,
     };
   },
 
-  gradeSubmission: async (id: string, grade: number, feedback: string, token: string): Promise<Submission> => {
+  gradeSubmission: async (id: string, grade: number, feedback: string, rubricScores?: RubricScore[], token?: string): Promise<Submission> => {
     const response = await fetch(`${API_BASE_URL}/submissions/${id}/grade`, {
       method: 'PUT',
-      headers: getAuthHeaders(token),
+      headers: getAuthHeaders(token || ''),
       body: JSON.stringify({
         grade,
         feedback,
+        rubricScores
       }),
     });
     
@@ -553,6 +559,7 @@ export const realApi = {
       feedback: data.feedback,
       projectLink: data.projectLink,
       fileUrl: data.fileUpload,
+      rubricScores: data.rubricScores,
       status: AssignmentStatus.GRADED,
     };
   },
