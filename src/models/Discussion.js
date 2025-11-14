@@ -11,6 +11,12 @@ const commentSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  // Tags for categorization
+  tags: [{
+    type: String,
+    trim: true,
+    lowercase: true
+  }],
   // Upvotes for the comment
   upvotes: {
     type: Number,

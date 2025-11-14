@@ -7,7 +7,7 @@ const Cohort = require('../models/Cohort');
 // @access  Private
 const addComment = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, tags } = req.body;
     
     // Find discussion by assignment ID
     let discussion = await Discussion.findOne({ assignmentId: req.params.assignmentId });
@@ -16,10 +16,11 @@ const addComment = async (req, res) => {
       return res.status(404).json({ message: 'Discussion not found for this assignment' });
     }
     
-    // Add comment
+    // Add comment with tags
     discussion.comments.push({
       userId: req.user._id,
-      message
+      message,
+      tags: tags || []
     });
     
     await discussion.save();
@@ -208,11 +209,42 @@ const endorseComment = async (req, res) => {
   }
 };
 
+// @desc    Get discussions by tag
+// @route   GET /api/discussions/tag/:tag
+// @access  Private
+const getDiscussionsByTag = async (req, res) => {
+  try {
+    const { tag } = req.params;
+    
+    // Find all discussions with comments that have this tag
+    const discussions = await Discussion.find({
+      'comments.tags': tag.toLowerCase()
+    }).populate('assignmentId', 'title')
+      .populate('comments.userId', 'name');
+    
+    // Filter comments to only include those with the tag
+    const filteredDiscussions = discussions.map(discussion => {
+      const filteredComments = discussion.comments.filter(comment => 
+        comment.tags.includes(tag.toLowerCase())
+      );
+      return {
+        assignmentId: discussion.assignmentId,
+        comments: filteredComments
+      };
+    });
+    
+    res.json(filteredDiscussions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addComment,
   getComments,
   deleteComment,
   upvoteComment,
   acceptAnswer,
-  endorseComment
+  endorseComment,
+  getDiscussionsByTag
 };

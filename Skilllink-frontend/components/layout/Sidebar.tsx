@@ -30,6 +30,12 @@ const adminNavLinks = [
   { to: '/app/alerts', icon: ChartIcon, label: 'Predictive Alerts', adminOnly: true },
 ];
 
+const communityNavLinks = [
+  { to: '/app/leaderboard', icon: ChartIcon, label: 'Leaderboard' },
+  { to: '/app/showcase', icon: ChartIcon, label: 'Project Showcase' },
+  { to: '/app/chat', icon: DiscussionsIcon, label: 'Chat' },
+];
+
 const profileLink = { to: ROUTES.PROFILE, icon: UserIcon, label: 'Profile' };
 
 const NavItem: React.FC<{ to: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; label: string }> = ({ to, icon: Icon, label }) => {
@@ -57,6 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   // Build navigation links based on user role
   const navLinks = [
     ...baseNavLinks,
+    ...communityNavLinks,
     ...(user?.role === UserRole.ADMIN ? adminNavLinks : []),
     profileLink
   ];

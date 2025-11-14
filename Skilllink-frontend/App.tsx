@@ -18,6 +18,9 @@ const DiscussionsPage = lazy(() => import('./pages/DiscussionsPage'));
 const ResourcesPage = lazy(() => import('./pages/ResourcesPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AdminAlertsPage = lazy(() => import('./pages/AdminAlertsPage'));
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
+const ShowcasePage = lazy(() => import('./pages/ShowcasePage'));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 const App: React.FC = () => {
@@ -53,6 +56,11 @@ const App: React.FC = () => {
                 <Route path="resources" element={<ResourcesPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="alerts" element={<AdminAlertsPage />} />
+                <Route path="leaderboard" element={<LeaderboardPage />} />
+                <Route path="leaderboard/:cohortId" element={<LeaderboardPage />} />
+                <Route path="showcase" element={<ShowcasePage />} />
+                <Route path="showcase/:cohortId" element={<ShowcasePage />} />
+                <Route path="chat/:cohortId" element={<ChatPage />} />
               </Route>
               
               <Route path="*" element={<NotFoundPage />} />

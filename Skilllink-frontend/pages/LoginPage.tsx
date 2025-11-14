@@ -79,25 +79,34 @@ const LoginPage: React.FC = () => {
               </div>
             )}
             
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-neutral-gray-light mb-2">I am a...</label>
-              <div className="flex bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-lg p-1">
-                <button
-                  type="button"
-                  onClick={() => setRole(UserRole.STUDENT)}
-                  className={`w-1/2 py-2 rounded-md transition-colors duration-300 ${role === UserRole.STUDENT ? 'bg-primary text-white shadow' : 'text-neutral-gray-light'}`}
-                >
-                  Student
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole(UserRole.FACILITATOR)}
-                  className={`w-1/2 py-2 rounded-md transition-colors duration-300 ${role === UserRole.FACILITATOR ? 'bg-primary text-white shadow' : 'text-neutral-gray-light'}`}
-                >
-                  Facilitator
-                </button>
+            {isSignup && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-neutral-gray-light mb-2">I am a...</label>
+                <div className="grid grid-cols-3 gap-2 bg-neutral-light-gray dark:bg-neutral-gray-medium rounded-lg p-1">
+                  <button
+                    type="button"
+                    onClick={() => setRole(UserRole.STUDENT)}
+                    className={`py-2 px-3 rounded-md transition-colors duration-300 text-sm font-medium ${role === UserRole.STUDENT ? 'bg-primary text-white shadow' : 'text-neutral-gray-light hover:bg-neutral-light-gray/50 dark:hover:bg-neutral-gray-dark/50'}`}
+                  >
+                    Student
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole(UserRole.FACILITATOR)}
+                    className={`py-2 px-3 rounded-md transition-colors duration-300 text-sm font-medium ${role === UserRole.FACILITATOR ? 'bg-primary text-white shadow' : 'text-neutral-gray-light hover:bg-neutral-light-gray/50 dark:hover:bg-neutral-gray-dark/50'}`}
+                  >
+                    Facilitator
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole(UserRole.ADMIN)}
+                    className={`py-2 px-3 rounded-md transition-colors duration-300 text-sm font-medium ${role === UserRole.ADMIN ? 'bg-primary text-white shadow' : 'text-neutral-gray-light hover:bg-neutral-light-gray/50 dark:hover:bg-neutral-gray-dark/50'}`}
+                  >
+                    Admin
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-4">
               <Input

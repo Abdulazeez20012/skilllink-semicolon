@@ -23,20 +23,26 @@ const resourceRoutes = require('./routes/resourceRoutes');
 const discussionRoutes = require('./routes/discussionRoutes');
 const cohortRoutes = require('./routes/cohortRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
+const leaderboardRoutes = require('./routes/leaderboardRoutes');
+const showcaseRoutes = require('./routes/showcaseRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 // Connect to database
 connectDB();
 
 const app = express();
 
-// Apply rate limiting
-app.use(rateLimiter);
-
-// Middleware
+// Middleware - CORS must come before rate limiting
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Apply rate limiting after CORS
+app.use(rateLimiter);
 app.use(express.json({ 
   extended: false,
   limit: process.env.FILE_SIZE_LIMIT || '10mb'
@@ -58,6 +64,10 @@ app.use('/api/resources', resourceRoutes);
 app.use('/api/discussions', discussionRoutes);
 app.use('/api/cohorts', cohortRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/showcase', showcaseRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handling middleware
 app.use(require('./middleware/errorHandler'));

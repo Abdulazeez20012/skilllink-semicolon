@@ -1,5 +1,5 @@
 const express = require('express');
-const { addComment, getComments, deleteComment, upvoteComment, acceptAnswer, endorseComment } = require('../controllers/discussionController');
+const { addComment, getComments, deleteComment, upvoteComment, acceptAnswer, endorseComment, getDiscussionsByTag } = require('../controllers/discussionController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
@@ -7,6 +7,10 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(authMiddleware);
+
+// Get discussions by tag
+router.route('/tag/:tag')
+  .get(getDiscussionsByTag);
 
 router.route('/:assignmentId')
   .post(addComment)

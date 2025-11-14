@@ -5,6 +5,7 @@ import { realApi } from '../services/realApi';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import GitHubRepoInfo from '../components/GitHubRepoInfo';
+import TagInput from '../components/TagInput';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -42,9 +43,21 @@ const AssignmentDetailPage: React.FC = () => {
     const [messages, setMessages] = useState<DiscussionMessage[]>([]);
     const [loading, setLoading] = useState(true);
     const [newMessage, setNewMessage] = useState('');
+    const [newMessageTags, setNewMessageTags] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [projectLink, setProjectLink] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
+
+    // Memoized handlers to prevent input focus loss
+    const handleNewMessageChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewMessage(e.target.value);
+    }, []);
+
+    const handleProjectLinkChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setProjectLink(e.target.value);
+    }, []);
+
+
 
     const fetchData = async () => {
         if (!id || !user) return;
@@ -131,8 +144,7 @@ const AssignmentDetailPage: React.FC = () => {
             
             const message = await realApi.postDiscussionMessage(id, { 
                 content: newMessage, 
-                user: currentUser,
-                timestamp: new Date().toISOString()
+                user: currentUser
             }, token);
             setMessages(prev => [...prev, message]);
             setNewMessage('');
@@ -200,7 +212,7 @@ const AssignmentDetailPage: React.FC = () => {
         }
     };
 
-    const StudentView = () => (
+    const studentView = React.useMemo(() => (
         <div className="space-y-6">
             {showSuccess && (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
@@ -216,7 +228,7 @@ const AssignmentDetailPage: React.FC = () => {
                         label="Project URL" 
                         placeholder="https://github.com/your-repo" 
                         value={projectLink} 
-                        onChange={e => setProjectLink(e.target.value)} 
+                        onChange={handleProjectLinkChange} 
                     />
                 </div>
                 <Button onClick={handleSubmitAssignment} className="mt-6 w-full" size="lg" disabled={isSubmitting}>
@@ -275,14 +287,8 @@ const AssignmentDetailPage: React.FC = () => {
                     <div className="flex gap-2">
                         <Input
                             value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
+                            onChange={handleNewMessageChange}
                             placeholder="Type your question here..."
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handlePostMessage();
-                                }
-                            }}
                         />
                         <Button onClick={handlePostMessage} disabled={!newMessage.trim()}>
                             <SendIcon />
@@ -362,9 +368,9 @@ const AssignmentDetailPage: React.FC = () => {
                 </div>
             </Card>
         </div>
-    );
+    ), [showSuccess, projectLink, assignment, submissions, user, messages, newMessage]);
 
-    const FacilitatorView = () => (
+    const facilitatorView = React.useMemo(() => (
         <div className="space-y-6">
             <Card className="p-6">
                 <h2 className="text-2xl font-bold font-heading mb-4">Student Submissions</h2>
@@ -427,14 +433,8 @@ const AssignmentDetailPage: React.FC = () => {
                     <div className="flex gap-2">
                         <Input
                             value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
+                            onChange={handleNewMessageChange}
                             placeholder="Type your question here..."
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handlePostMessage();
-                                }
-                            }}
                         />
                         <Button onClick={handlePostMessage} disabled={!newMessage.trim()}>
                             <SendIcon />
@@ -525,7 +525,7 @@ const AssignmentDetailPage: React.FC = () => {
                 </div>
             </Card>
         </div>
-    );
+    ), [submissions, assignment, messages, newMessage, user]);
 
     if (loading || authLoading) {
         return (
@@ -563,8 +563,8 @@ const AssignmentDetailPage: React.FC = () => {
                 </div>
             </div>
 
-            {user?.role === UserRole.STUDENT && <StudentView />}
-            {user?.role === UserRole.FACILITATOR && <FacilitatorView />}
+            {user?.role === UserRole.STUDENT && studentView}
+            {user?.role === UserRole.FACILITATOR && facilitatorView}
         </div>
     );
 };

@@ -4,9 +4,11 @@ import { AssignmentStatus } from '../../types';
 
 interface BadgeProps {
   status: AssignmentStatus;
+  children?: React.ReactNode;
+  className?: string;
 }
 
-const Badge: React.FC<BadgeProps> = ({ status }) => {
+const Badge: React.FC<BadgeProps> = ({ status, children, className = '' }) => {
   const statusColors: Record<AssignmentStatus, string> = {
     [AssignmentStatus.PENDING]: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
     [AssignmentStatus.SUBMITTED]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
@@ -16,9 +18,9 @@ const Badge: React.FC<BadgeProps> = ({ status }) => {
 
   return (
     <span
-      className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${statusColors[status]}`}
+      className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${statusColors[status]} ${className}`}
     >
-      {status}
+      {children || status}
     </span>
   );
 };

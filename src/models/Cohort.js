@@ -46,8 +46,20 @@ const cohortSchema = new mongoose.Schema({
     }]
   }],
   facilitators: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    role: {
+      type: String,
+      enum: ['Lead Instructor', 'Mentor', 'Guest Lecturer', 'Teaching Assistant'],
+      default: 'Mentor'
+    },
+    assignedDate: {
+      type: Date,
+      default: Date.now
+    }
   }],
   students: [{
     type: mongoose.Schema.Types.ObjectId,
